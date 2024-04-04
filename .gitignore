@@ -3,4 +3,6 @@ __pycache__/
 .git/
 .pyc
 ./DataEXP/
-./TestScipts/
+TestScipts/
+GlobalGUI/Test_Scripts/
+PyMAT/
