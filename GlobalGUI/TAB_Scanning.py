@@ -12,6 +12,10 @@ from zaber_motion.binary import Connection,CommandCode
 
 def Set_Scanning_Tab(self):
 
+
+    ###################################################################
+    ###################################################################
+    #Graphic Widget
     class ColorGrid(QWidget):
         def __init__(self, g_W, g_H, cell_size):
             super().__init__()
@@ -97,14 +101,8 @@ def Set_Scanning_Tab(self):
             df = pd.DataFrame(self.CSV_Moments_M1_Matrix)
             df.to_csv('Scanning_Moments_M1_CSV.csv', index=True)
 
-    ################################################
-    ################################################
-
-    def start_refrehs_scan():
-        self.color_grid_widget.Start_Grid_Scan()
-
-    def stop_refrehs_scan():
-        self.color_grid_widget.Stop_Grid_Scan()
+    ###################################################################
+    ###################################################################
 
     # Reset widget to avoid multiple instances
     def reset_refrehs_scan():
@@ -112,31 +110,12 @@ def Set_Scanning_Tab(self):
         self.color_grid_widget.Stop_Grid_Scan()
         if self.color_grid_widget is not None:
             self.ui.load_pages.Layout_table_Scan.removeWidget(self.color_grid_widget)
- 
-
-    def Update_Scan_Param():
-            width_g=int(self.ui.load_pages.lineEdit_Grid_Wsize.text())
-            height_g=int(self.ui.load_pages.lineEdit_Grid_Hsize.text())
-            cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text())
-            self.color_grid_widget = ColorGrid(width_g,height_g,cell_size)
-            self.ui.load_pages.Layout_table_Scan.addWidget(self.color_grid_widget)
-
-
-
     #Button connections
-    self.ui.load_pages.Calib_Start_Scan_but.clicked.connect(start_refrehs_scan)
-    self.ui.load_pages.Calib_Stop_Scan_but.clicked.connect(stop_refrehs_scan)
     self.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(reset_refrehs_scan)
-    self.ui.load_pages.update_param_scan_but.clicked.connect(Update_Scan_Param)
-
-
-
 
     ###################################################################
     ###################################################################
     #Zaber Functions
-    ###################################################################
-    ###################################################################
 
     #Initialization
     self.Pos_Y1_Scan = float(self.ui.load_pages.lineEdit_y1_scan.text())
@@ -145,16 +124,11 @@ def Set_Scanning_Tab(self):
     self.time_timer_scan=0
     self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text()) 
     
-    self.g_W=int(self.ui.load_pages.lineEdit_Grid_Wsize.text())
-    self.g_W=int(self.g_W/self.cell_size)
-    self.g_H=int(self.ui.load_pages.lineEdit_Grid_Hsize.text())
-    self.g_H=int(self.g_H/self.cell_size)
     self.counter_Data_per_Pixel=0
     self.current_col=0
     self.current_row=0
     self.New_Color= [255,255,255]
     self.scanning_Finish=False
-
     #Counter for the N. of average samples 
     self.Counter_DAQ_samples=0
     self.PSD_Avg_Moment=0
@@ -166,13 +140,13 @@ def Set_Scanning_Tab(self):
         self.Adquisit_Timer.stop()
         with Connection.open_serial_port(self.Zaber_COM) as connection:
             connection.generic_command(1, CommandCode.STOP, 1)
+    
     def Stop_z2():
         self.Pixel_Interval.stop()
         self.Pixel_Interval_X.stop()
         self.Adquisit_Timer.stop()
         with Connection.open_serial_port(self.Zaber_COM) as connection:
             connection.generic_command(3, CommandCode.STOP, 1)
-
 
     def move_to_position(Zab,position):
         with Connection.open_serial_port(self.Zaber_COM) as connection:
@@ -185,9 +159,18 @@ def Set_Scanning_Tab(self):
             act_pos=device_list[Zab].get_position(Units.LENGTH_MICROMETRES)
             return act_pos
 
-    #########################################################
-    #########################################################
-    
+    ###################################################################
+    ###################################################################
+    #Color pixel adjustment
+    def interpolation_Color(oldcolor):
+        min_x = 10000
+        max_x = 35000
+        min_y = 255
+        max_y = 0
+        newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
+        return newcolor
+
+
     # Y-direction-scanning 
     def start_continuous_movement():
 
@@ -213,11 +196,12 @@ def Set_Scanning_Tab(self):
         with Connection.open_serial_port(self.Zaber_COM) as connection:
             connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.speed/1.55)/10)*1.6384/0.047625)    )    )#/0.047625)) #speed in um/s
         
+
         self.Pixel_Interval_X.setInterval(self.time_timer_scan)
         self.Pixel_Interval_X.start()
         self.Adquisit_Timer.start()
-    #########################################################
-    #########################################################
+    ###################################################################
+    ###################################################################
     # Y-direction-scanning
     #Initial_Move
     def check_position_and_start(Zab, reference_Zab):
@@ -235,8 +219,8 @@ def Set_Scanning_Tab(self):
             QTimer.singleShot(500, check_position_and_start_X(Zab,reference_Zab))
 
 
-    #########################################################
-    #########################################################
+    ###################################################################
+    ###################################################################
     # Y-direction-scanning
     #General_Logic
     def Scan_Continuos_Y():
@@ -286,13 +270,18 @@ def Set_Scanning_Tab(self):
         self.current_col=0
         self.current_row=0
         self.New_Color= [255,255,255]
+
+        # Average dev flow rate
+        self.Moment_Dev=pd.DataFrame()
+        self.Samples_to_AVG=0
+        self.Samples_To_AVG_Flag=True
         # Move first to (X1,Y1)
         move_to_position(0,self.Pos_Y1_Scan)
         move_to_position(2,self.Pos_X1_Scan)
         check_position_and_start_X(2,self.Pos_X1_Scan)
 
-    #########################################################
-    #########################################################
+    ###################################################################
+    ###################################################################
     # Y-direction-scanning
     #Graphic_Data_Update
     def Change_Pixel_DAQ():
@@ -323,11 +312,15 @@ def Set_Scanning_Tab(self):
             M0 = np.sum(self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
             M1 = np.sum(self.dataFreq * self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0]) / M0
             print('AVG Moment')
-            print(M1/M0)
+            colorcolor=int(M1/M0)
+            print(colorcolor)
+            newcolor=interpolation_Color(colorcolor)
+
+            print('end AVG Moment')
             #Restart counter and variable
             self.Counter_DAQ_samples=0
             self.Freq_Data=pd.DataFrame()
-            self.New_Color=[0, int(((M1/M0))*255/48000), 0]
+            self.New_Color=[0, newcolor, 0]
 
 
             self.color_grid_widget.changeCellColor(self.counter_Step_Zaber_X, self.counter_Data_per_Pixel, self.New_Color)
@@ -345,22 +338,42 @@ def Set_Scanning_Tab(self):
         if self.counter_Data_per_Pixel >= (self.g_W):
             self.counter_Data_per_Pixel=0
             Stop_z2() #Paro el movimiento
+            actual_pos=(self.Pos_Y1_Scan+(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)*self.counter_Step_Zaber_X))
+            #Save Avg spectrum for each row
+            self.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
+            self.Data_Spectrum_Array=pd.DataFrame()
+        
             #Reinicio posiciones
             self.counter_Step_Zaber_X+=1
             new_x_pos=(self.Pos_Y1_Scan+(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)*self.counter_Step_Zaber_X))
+            
             if new_x_pos>=self.Pos_Y2_Scan:
                 self.Adquisit_Timer.stop()
                 self.color_grid_widget.exportar_Matrix_CSV()
+                self.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
                 print('------  Scan finished --------')
-                print('Maximum value detected')
-                print(self.maximaxi)
-                self.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum.csv', index=True)
             else:
                 move_to_position(0,new_x_pos)
                 move_to_position(2,self.Pos_X1_Scan)
                 check_position_and_start_X(2,self.Pos_X1_Scan)
+
         else:
-            #AVG the PSD and Weighted Moments
+            #Desviation estimation, vectorized by row by pixel
+            factor_PSD = 2 / (self.number_of_samples * self.Laser_Frequency)
+            self.Pixel_by_Row = self.Freq_Data.pow(2).mul(factor_PSD)
+            M0_Pixel=self.Pixel_by_Row.sum(axis=0)
+            M0_Pixel = M0_Pixel.replace(0, 1)
+            M1_Pixel=self.Pixel_by_Row.mul(self.dataFreq, axis=0)
+            M1_Pixel=M1_Pixel.sum(axis=0)
+            M_dev=M1_Pixel/M0_Pixel
+            #Set N of data to average fix length
+            if self.Samples_To_AVG_Flag==True:
+                self.Samples_To_AVG=len(M1_Pixel)
+                self.Samples_To_AVG_Flag=False
+            M_dev = pd.Series(np.resize(M_dev.to_numpy(), self.Samples_To_AVG))
+            self.Moment_Dev=pd.concat([self.Moment_Dev, M_dev], axis=1)
+            
+            
             self.dataAmp_Avg=(self.Freq_Data.mean(axis=1))
             #Save Avg Spectrum
             self.Data_Spectrum_Array=pd.concat([self.Data_Spectrum_Array, self.dataAmp_Avg], axis=1)
@@ -370,9 +383,6 @@ def Set_Scanning_Tab(self):
             if self.dataAmp_Avg.empty:
                 self.dataAmp_Avg=self.dataFreq*0
                 self.Freq_Data=self.dataFreq*0
-            #search the maximum peak detected
-            #if self.maximaxi<max(self.Freq_Data.max()):
-            #    self.maximaxi=max(self.Freq_Data.max())
 
             self.PSD_Avg_Moment=(self.dataAmp_Avg*self.dataAmp_Avg)*(2/(self.number_of_samples*self.Laser_Frequency))
             #self.PSD_Avg_Moment = self.PSD_Avg_Moment[:n // 2]
@@ -383,13 +393,13 @@ def Set_Scanning_Tab(self):
             M1 = np.sum(self.dataFreq * self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
             print('AVG Moment')
             print(M1/M0)
+            colorcolor=int(M1/M0)
             #Reinicio conteo data average y vector
             self.Counter_DAQ_samples=0
             self.Freq_Data=pd.DataFrame()
-            self.New_Color=[0, int(40000-(((M1/M0))*255/37000)), 0]
+            self.New_Color=[0, interpolation_Color(colorcolor), 0]
 
             self.color_grid_widget.changeCellColor(self.counter_Data_per_Pixel,self.counter_Step_Zaber_X, self.New_Color)
-            
             self.color_grid_widget.updateCSV(self.counter_Step_Zaber_X-1,self.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
             
             self.counter_Data_per_Pixel+=1
@@ -399,33 +409,103 @@ def Set_Scanning_Tab(self):
                 self.counter_Data_per_Pixel += 1
 
 
-
     def Capture_Data_Avg():
         
-
         ######### Update Laser data FFT and Voltage
         self.DAQ_Data=self.threadDAQ.DAQ_Data
         self.data_DAQ2=butter_bandpass_filter(self.DAQ_Data, self.low_freq_filter, self.high_freq_filter,self.order_filter, self.Laser_Frequency)
         self.dataAmp, self.dataFreq, _=FFT_calc(self.data_DAQ2, self.Laser_Frequency)
-
-        #self.Freq_Data[self.Counter_DAQ_samples]=self.dataAmp
         amp=pd.Series((self.dataAmp))
-        #print(max(amp))
-        
-        #Solo considero los datos si son mayores a 1755 peak sin flow
-        #if (max(amp)>1000):
+        #Add a new column
         self.Freq_Data=pd.concat([self.Freq_Data, amp], axis=1)
-        
         self.Counter_DAQ_samples=self.Counter_DAQ_samples+1
-        #print('timer')
+
 
         
 
 
-    #########################################################
-    #########################################################
-    #MAXIMUM PEAK DETECTED
-    self.maximaxi=0
+
+
+
+    ###################################################################
+    ###################################################################
+    #CALIBRATION
+    def Start_Vel_Calib():
+
+
+        #Parameters ###########################
+        self.Directory=(self.ui.load_pages.lineEdit_Directory.text())
+        self.FileName=(self.ui.load_pages.lineEdit_Name_Files.text())
+        self.Amp_Peak_Search=float(self.ui.load_pages.Vel_Threshold_Peak.text())
+
+        zab_start=int(self.ui.load_pages.Vel_Manual_X1.text())
+        zab_stop=int(self.ui.load_pages.Vel_Manual_X2.text())
+        zab_steps=int(self.ui.load_pages.Vel_Steps_Calib.text())
+        self.Data_To_Check=int(self.ui.load_pages.lineEdit_Avg_FFT.text())
+        self.Zaber_Steps=np.linspace(start=zab_start, stop=zab_stop, num=zab_steps)
+        self.ActualStep=0
+        self.Zaber_Pos=0
+        self.Vel_Move_Start=False
+        self.Freq_Data=pd.DataFrame()
+        self.Counter_DAQ_samples=0
+        #List with max peaks
+        self.Vel_Calib_Peaks_List=[]
+        self.Vel_Routine.start()
+
+
+    def Vel_Routine():
+        #Pipeline
+        if self.ActualStep<len(self.Zaber_Steps):
+            #Move Zaber
+            if self.Vel_Move_Start==False:
+                with Connection.open_serial_port(self.Zaber_COM) as connection:
+                    device_list = connection.detect_devices()
+                    new_position=self.Zaber_Steps[self.ActualStep]
+                    #zaber_pos=new_position/10000
+                    device_list[2].move_absolute(new_position, Units.LENGTH_MICROMETRES)
+                    print("---------- Zaber Pos: ---------- " + str(self.Zaber_Steps[self.ActualStep])+" ----------")
+                    self.Vel_Move_Start=True
+                    #Clear
+                    self.Freq_Data=pd.DataFrame()
+                    self.Counter_DAQ_samples=0
+                    self.Adquisit_Timer.start()
+            #Adquisition
+            else:
+                # Once the samples are acquired
+                if self.Counter_DAQ_samples>self.Data_To_Check:
+                    self.Adquisit_Timer.stop()
+                    self.Vel_Calib_Peaks_List.append(max(self.Freq_Data.mean(axis=1)))
+                    #Move to next Position
+                    self.ActualStep=self.ActualStep+1
+                    print("--- Next Step ---")
+                    self.Vel_Move_Start=False
+        else:
+            self.Vel_Routine.stop()
+            print(self.Vel_Calib_Peaks_List)
+            #Find Frontiers
+            New_Limits=[]
+            for i, valor in enumerate(self.Vel_Calib_Peaks_List):
+                if valor >= self.Amp_Peak_Search:
+                    New_Limits.append(i)
+            inicio_grupo = 0
+            fin_grupo = 0
+            if len(New_Limits) > 2:
+
+                max_longitud = 0
+                for i in range(len(New_Limits) - 1):
+                    longitud_actual = New_Limits[i+1] - New_Limits[i]
+                    if longitud_actual > max_longitud:
+                        max_longitud = longitud_actual
+                        inicio_grupo = New_Limits[i]
+                        fin_grupo = New_Limits[i+1]
+            New_Limits=[inicio_grupo, fin_grupo]
+            print(New_Limits)
+            self.ui.load_pages.Vel_Limit_X2.setText(str(round(self.Zaber_Steps[fin_grupo],1)))
+            self.ui.load_pages.Vel_Limit_X1.setText(str(round(self.Zaber_Steps[inicio_grupo],1)))
+
+            print("---------- Calibration finished ---------- ")
+    ###################################################################
+    ###################################################################
     self.Data_Spectrum_Array=pd.DataFrame()
     
     #Buttons and timmer connections #########################
@@ -438,15 +518,19 @@ def Set_Scanning_Tab(self):
     self.Adquisit_Timer = QTimer()
     self.Adquisit_Timer.setInterval(1)
     self.Adquisit_Timer.timeout.connect(Capture_Data_Avg)
+    #For Calibration Routine
+    self.Vel_Routine= QTimer()
+    self.Vel_Routine.setInterval(1)
+    self.Vel_Routine.timeout.connect(Vel_Routine)
 
     self.ui.load_pages.Stop_x_but.clicked.connect(get_current_position)
     self.ui.load_pages.continuous_scanY_but.clicked.connect(Scan_Continuos_Y)
     self.ui.load_pages.continuous_scanX_but.clicked.connect(Scan_Continuos_X)
     self.ui.load_pages.Stop_Y_but.clicked.connect(Stop_z1)
     self.ui.load_pages.Stop_x_but.clicked.connect(Stop_z2)
-
-    #########################################################
-    #########################################################
+    self.ui.load_pages.Vel_Start_Calib.clicked.connect(Start_Vel_Calib)
+    ###################################################################
+    ###################################################################
             
 
    

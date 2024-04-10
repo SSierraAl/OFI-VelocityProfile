@@ -127,7 +127,7 @@ def InsertHomeGraphs(self):
                 np.save(self.Directory+self.FileName+"_"+str(self.number_file)+'_'+str(self.CounterPeaks)+self.exten, self.DAQ_Data)
             
 
-        # Particle Search
+        # Calibration STEP
         #################################################
         if self.calibration_check==True:
             if self.Zaber_Adquisition==True:
@@ -173,32 +173,6 @@ def InsertHomeGraphs(self):
 
 
 
-
-    ##############################################
-    # Particle Detection
-    ##############################################
-
-    def Start_Search_Particle():
-
-        self.Directory=(self.ui.load_pages.lineEdit_Directory.text())
-        self.FileName=(self.ui.load_pages.lineEdit_Name_Files.text())
-        self.Amp_Peak_Search=float(self.ui.load_pages.lineEdit_amp_peak.text())
-
-        self.CounterPeaks=0
-        self.number_file=0
-
-        self.Particle_Search=True
-
-    def Stop_Search_Particle():
-        self.CounterPeaks=0
-        self.number_file=0
-        self.Particle_Search=False
-
-    self.ui.load_pages.Search_Particles_but.clicked.connect(Start_Search_Particle) 
-    self.ui.load_pages.Stop_Search_P_but.clicked.connect(Stop_Search_Particle)
-
-
-
     ##############################################
     # Zaber Calibration
     ##############################################
@@ -219,7 +193,6 @@ def InsertHomeGraphs(self):
         zab_steps=int(self.ui.load_pages.lineEdit_steps_zab.text())
         self.Data_To_Check=int(self.ui.load_pages.lineEdit_zab_samplesCheck.text())
         
-
         self.Zaber_Steps=np.linspace(start=zab_start, stop=zab_stop, num=zab_steps)
         self.ActualStep=0
         self.Zaber_Pos=0
@@ -271,7 +244,4 @@ def InsertHomeGraphs(self):
             device=device_list[2]
             #device.home()
             device.move_absolute(float(3.8357), Units.LENGTH_CENTIMETRES) #4.21024 4.642857
-
-
-    self.ui.load_pages.Start_Zaber_Calib_but.clicked.connect(Start_Zaber_Calib_Home)
 
