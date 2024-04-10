@@ -504,6 +504,12 @@ def Set_Scanning_Tab(self):
             self.ui.load_pages.Vel_Limit_X1.setText(str(round(self.Zaber_Steps[inicio_grupo],1)))
 
             print("---------- Calibration finished ---------- ")
+    
+    
+    
+    def Get_Report():
+        plot_grouped_error_bars('Scanning_Moments_Dev.csv', 2)
+    
     ###################################################################
     ###################################################################
     self.Data_Spectrum_Array=pd.DataFrame()
@@ -529,6 +535,7 @@ def Set_Scanning_Tab(self):
     self.ui.load_pages.Stop_Y_but.clicked.connect(Stop_z1)
     self.ui.load_pages.Stop_x_but.clicked.connect(Stop_z2)
     self.ui.load_pages.Vel_Start_Calib.clicked.connect(Start_Vel_Calib)
+    self.ui.load_pages.Vel_Report.clicked.connect(Get_Report)
     ###################################################################
     ###################################################################
             

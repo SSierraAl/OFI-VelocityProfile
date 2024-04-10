@@ -6,3 +6,5 @@ __pycache__/
 TestScipts/
 GlobalGUI/Test_Scripts/
 PyMAT/
+GlobalGUI/Particles_Data/
+*.csv

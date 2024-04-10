@@ -1014,24 +1014,10 @@ class Ui_MainPages(object):
 
         self.gridLayout_7.addWidget(self.label_34, 1, 0, 1, 1)
 
-        self.lineEdit_stepy_scan = QLineEdit(self.page_calib)
-        self.lineEdit_stepy_scan.setObjectName(u"lineEdit_stepy_scan")
-        sizePolicy1.setHeightForWidth(self.lineEdit_stepy_scan.sizePolicy().hasHeightForWidth())
-        self.lineEdit_stepy_scan.setSizePolicy(sizePolicy1)
-
-        self.gridLayout_7.addWidget(self.lineEdit_stepy_scan, 2, 4, 1, 1)
-
         self.label_35 = QLabel(self.page_calib)
         self.label_35.setObjectName(u"label_35")
 
         self.gridLayout_7.addWidget(self.label_35, 0, 3, 1, 1)
-
-        self.lineEdit_stepx_scan = QLineEdit(self.page_calib)
-        self.lineEdit_stepx_scan.setObjectName(u"lineEdit_stepx_scan")
-        sizePolicy1.setHeightForWidth(self.lineEdit_stepx_scan.sizePolicy().hasHeightForWidth())
-        self.lineEdit_stepx_scan.setSizePolicy(sizePolicy1)
-
-        self.gridLayout_7.addWidget(self.lineEdit_stepx_scan, 2, 2, 1, 1)
 
         self.lineEdit_y1_scan = QLineEdit(self.page_calib)
         self.lineEdit_y1_scan.setObjectName(u"lineEdit_y1_scan")
@@ -1043,14 +1029,14 @@ class Ui_MainPages(object):
         self.label_41 = QLabel(self.page_calib)
         self.label_41.setObjectName(u"label_41")
 
-        self.gridLayout_7.addWidget(self.label_41, 4, 3, 1, 1)
+        self.gridLayout_7.addWidget(self.label_41, 3, 3, 1, 1)
 
         self.lineEdit_speed_ums = QLineEdit(self.page_calib)
         self.lineEdit_speed_ums.setObjectName(u"lineEdit_speed_ums")
         sizePolicy1.setHeightForWidth(self.lineEdit_speed_ums.sizePolicy().hasHeightForWidth())
         self.lineEdit_speed_ums.setSizePolicy(sizePolicy1)
 
-        self.gridLayout_7.addWidget(self.lineEdit_speed_ums, 4, 4, 1, 1)
+        self.gridLayout_7.addWidget(self.lineEdit_speed_ums, 3, 4, 1, 1)
 
         self.lineEdit_x2_scan = QLineEdit(self.page_calib)
         self.lineEdit_x2_scan.setObjectName(u"lineEdit_x2_scan")
@@ -1071,15 +1057,22 @@ class Ui_MainPages(object):
 
         self.gridLayout_7.addWidget(self.lineEdit_y2_scan, 1, 4, 1, 1)
 
-        self.label_38 = QLabel(self.page_calib)
-        self.label_38.setObjectName(u"label_38")
+        self.lineEdit_Pixel_size = QLineEdit(self.page_calib)
+        self.lineEdit_Pixel_size.setObjectName(u"lineEdit_Pixel_size")
+        sizePolicy4 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.lineEdit_Pixel_size.sizePolicy().hasHeightForWidth())
+        self.lineEdit_Pixel_size.setSizePolicy(sizePolicy4)
 
-        self.gridLayout_7.addWidget(self.label_38, 2, 0, 1, 1)
+        self.gridLayout_7.addWidget(self.lineEdit_Pixel_size, 3, 2, 1, 1)
 
-        self.label_39 = QLabel(self.page_calib)
-        self.label_39.setObjectName(u"label_39")
+        self.label_32 = QLabel(self.page_calib)
+        self.label_32.setObjectName(u"label_32")
+        sizePolicy2.setHeightForWidth(self.label_32.sizePolicy().hasHeightForWidth())
+        self.label_32.setSizePolicy(sizePolicy2)
 
-        self.gridLayout_7.addWidget(self.label_39, 2, 3, 1, 1)
+        self.gridLayout_7.addWidget(self.label_32, 3, 0, 1, 1)
 
         self.label_36 = QLabel(self.page_calib)
         self.label_36.setObjectName(u"label_36")
@@ -1092,23 +1085,6 @@ class Ui_MainPages(object):
         self.lineEdit_x1_scan.setSizePolicy(sizePolicy1)
 
         self.gridLayout_7.addWidget(self.lineEdit_x1_scan, 0, 2, 1, 1)
-
-        self.label_32 = QLabel(self.page_calib)
-        self.label_32.setObjectName(u"label_32")
-        sizePolicy2.setHeightForWidth(self.label_32.sizePolicy().hasHeightForWidth())
-        self.label_32.setSizePolicy(sizePolicy2)
-
-        self.gridLayout_7.addWidget(self.label_32, 4, 0, 1, 1)
-
-        self.lineEdit_Pixel_size = QLineEdit(self.page_calib)
-        self.lineEdit_Pixel_size.setObjectName(u"lineEdit_Pixel_size")
-        sizePolicy4 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.lineEdit_Pixel_size.sizePolicy().hasHeightForWidth())
-        self.lineEdit_Pixel_size.setSizePolicy(sizePolicy4)
-
-        self.gridLayout_7.addWidget(self.lineEdit_Pixel_size, 4, 2, 1, 1)
 
 
         self.verticalLayout_8.addLayout(self.gridLayout_7)
@@ -1153,6 +1129,11 @@ class Ui_MainPages(object):
 
 
         self.verticalLayout_8.addLayout(self.gridLayout_3)
+
+        self.Vel_Report = QPushButton(self.page_calib)
+        self.Vel_Report.setObjectName(u"Vel_Report")
+
+        self.verticalLayout_8.addWidget(self.Vel_Report)
 
         self.verticalSpacer_9 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
@@ -1294,26 +1275,23 @@ class Ui_MainPages(object):
         self.Vel_Limit_X2.setText(QCoreApplication.translate("MainPages", u"20000", None))
         self.label_29.setText(QCoreApplication.translate("MainPages", u"Scanning", None))
         self.label_34.setText(QCoreApplication.translate("MainPages", u"X2 [um:", None))
-        self.lineEdit_stepy_scan.setText(QCoreApplication.translate("MainPages", u"200", None))
         self.label_35.setText(QCoreApplication.translate("MainPages", u"Y1 [um:", None))
-        self.lineEdit_stepx_scan.setText(QCoreApplication.translate("MainPages", u"200", None))
         self.lineEdit_y1_scan.setText(QCoreApplication.translate("MainPages", u"10000", None))
         self.label_41.setText(QCoreApplication.translate("MainPages", u"Speed [um/s]: ", None))
         self.lineEdit_speed_ums.setText(QCoreApplication.translate("MainPages", u"200", None))
         self.lineEdit_x2_scan.setText(QCoreApplication.translate("MainPages", u"6700", None))
         self.label_33.setText(QCoreApplication.translate("MainPages", u"X1 [um]:", None))
         self.lineEdit_y2_scan.setText(QCoreApplication.translate("MainPages", u"10400", None))
-        self.label_38.setText(QCoreApplication.translate("MainPages", u"Step X [um]:", None))
-        self.label_39.setText(QCoreApplication.translate("MainPages", u"Step Y [um]:", None))
+        self.lineEdit_Pixel_size.setText(QCoreApplication.translate("MainPages", u"200", None))
+        self.label_32.setText(QCoreApplication.translate("MainPages", u"Size Pixels [um]:", None))
         self.label_36.setText(QCoreApplication.translate("MainPages", u"Y2 [um:", None))
         self.lineEdit_x1_scan.setText(QCoreApplication.translate("MainPages", u"3700", None))
-        self.label_32.setText(QCoreApplication.translate("MainPages", u"Size Pixels [um]:", None))
-        self.lineEdit_Pixel_size.setText(QCoreApplication.translate("MainPages", u"200", None))
         self.Stop_x_but.setText(QCoreApplication.translate("MainPages", u"Stop X", None))
         self.continuous_scanX_but.setText(QCoreApplication.translate("MainPages", u"Continuos Scan X", None))
         self.Stop_Y_but.setText(QCoreApplication.translate("MainPages", u"Stop Y", None))
         self.continuous_scanY_but.setText(QCoreApplication.translate("MainPages", u"Continuous Scan Y", None))
         self.Step_Step_but.setText(QCoreApplication.translate("MainPages", u"Stop DAQ", None))
         self.Calib_Reset_Scan_but.setText(QCoreApplication.translate("MainPages", u"Reset Grid", None))
+        self.Vel_Report.setText(QCoreApplication.translate("MainPages", u"Velocity Profile Report", None))
     # retranslateUi
 
