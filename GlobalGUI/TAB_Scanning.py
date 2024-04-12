@@ -163,8 +163,8 @@ def Set_Scanning_Tab(self):
     ###################################################################
     #Color pixel adjustment
     def interpolation_Color(oldcolor):
-        min_x = 10000
-        max_x = 35000
+        min_x = 15000
+        max_x = 37000
         min_y = 255
         max_y = 0
         newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
@@ -193,9 +193,11 @@ def Set_Scanning_Tab(self):
         self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text()) 
         self.time_timer_scan=((time_to_travel/(distance/self.cell_size)))
 
-        with Connection.open_serial_port(self.Zaber_COM) as connection:
-            connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.speed/1.55)/10)*1.6384/0.047625)    )    )#/0.047625)) #speed in um/s
-        
+        try:
+            with Connection.open_serial_port(self.Zaber_COM) as connection:
+                connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.speed/1.55)/10)*1.6384/0.047625)    )    )#/0.047625)) #speed in um/s
+        except:
+            start_continuous_movement_X()
 
         self.Pixel_Interval_X.setInterval(self.time_timer_scan)
         self.Pixel_Interval_X.start()
@@ -508,7 +510,7 @@ def Set_Scanning_Tab(self):
     
     
     def Get_Report():
-        plot_grouped_error_bars('Scanning_Moments_Dev.csv', 2)
+        plot_grouped_error_bars('Scanning_Moments_Dev.csv', int((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.cell_size))
     
     ###################################################################
     ###################################################################

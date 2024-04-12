@@ -48,8 +48,11 @@ class WorkerDAQ(QObject):
             reader = AnalogSingleChannelReader(task_Laser.in_stream)
 
             while self.running:
-                reader.read_many_sample(self.DAQ_Data, number_of_samples_per_channel=self.number_of_samples, timeout=10)
-                self.completeddaq.emit(self.DAQ_Data)  # Emitting data read from DAQ
+                try:
+                    reader.read_many_sample(self.DAQ_Data, number_of_samples_per_channel=self.number_of_samples, timeout=10)
+                    self.completeddaq.emit(self.DAQ_Data)  # Emitting data read from DAQ
+                except:
+                    pass
 
     def stop(self):
         self.running = False 
