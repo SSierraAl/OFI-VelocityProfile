@@ -7,8 +7,9 @@ def plot_grouped_error_bars(filename, num_groups):
     # Load the CSV file, assuming the first column is an index
     df = pd.read_csv(filename, index_col=0)
     
+
     # Invert the values in the DataFrame
-    df = df.apply(lambda row: row.max() + row.min() - row, axis=1)
+    #df = df.apply(lambda row: row.max() + row.min() - row, axis=1)
         #df[column] = max_val + min_val - df[column]
     
     # Calculate mean and standard deviation for each column after inversion
@@ -50,4 +51,4 @@ def plot_grouped_error_bars(filename, num_groups):
     plt.show()
 
 
-plot_grouped_error_bars('Scanning_Moments_Dev.csv', 2)
+plot_grouped_error_bars('./Angle_Impact/100_20degree/Scanning_Moments_Dev.csv', 4)
