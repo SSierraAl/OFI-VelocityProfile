@@ -26,28 +26,29 @@ def Set_Scanning_Tab(self):
             self.g_H = g_H
             self.cell_size = cell_size
 
-            #Matrix to export CSV data
+            # Matrix to export CSV data
             self.CSV_Moments_M0_Matrix=np.zeros((self.g_W,self.g_H))
             self.CSV_Moments_M1_Matrix=np.zeros((self.g_W,self.g_H))
             self.CSV_Moments_Matrix=np.zeros((self.g_W,self.g_H))
 
-            # Configurar la vista de gráficos
+            # Create PlotItem and add it to the GraphicsLayout
             self.graphicsView = pg.GraphicsView()
             self.graphicsView.setBackgroundBrush(QColor('white'))
             self.graphicsLayout = pg.GraphicsLayout()
             self.graphicsView.setCentralItem(self.graphicsLayout)
 
-            # Crear PlotItem y agregarlo al GraphicsLayout
+            # Create PlotItem and add it to the GraphicsLayout
             self.plotItem = self.graphicsLayout.addPlot()
             self.plotItem.showGrid(x=True, y=True)
             self.plotItem.setRange(xRange=(0, self.g_W), yRange=(0, self.g_H), padding=0)
-            # Crear el ImageItem y agregarlo al PlotItem
+            
+            # Create the ImageItem and add it to the PlotItem
             self.imageItem = pg.ImageItem()
             self.plotItem.addItem(self.imageItem)
             self.plotItem.getViewBox().setBackgroundColor('w')
             self.gridArray = np.ones((self.g_H, self.g_W, 3), dtype=np.uint8)*255
 
-            # Configurar el diseño
+            # Configure the design
             layout = QVBoxLayout(self)
             layout.addWidget(self.graphicsView)
 
@@ -55,24 +56,24 @@ def Set_Scanning_Tab(self):
             self.timer_Calib_Scan.setInterval(1000)  # Intervalo en milisegundos
             self.timer_Calib_Scan.timeout.connect(self.updatePixel)
 
-            # Variables para recorrer los píxeles
+            # Variables for traversing pixels
             self.current_row = 0
             self.current_col = 0
 
 
         def updatePixel(self):
 
-            # Cambiar el color del píxel actual
-            self.gridArray[self.current_row, self.current_col] = [255, 0, 0]  # Rojo
-            # Actualizar la imagen
+            # Change the colour of the current pixel
+            self.gridArray[self.current_row, self.current_col] = [255, 0, 0]  # Red
+            # Updating the image
             self.imageItem.setImage(self.gridArray, autoLevels=False)
-            # Moverse al siguiente píxel
+            # Move to the next pixel
             self.current_col += 1
-            if self.current_col >= self.g_W:
-                self.current_col = 0
-                self.current_row += 1
-                if self.current_row >= self.g_H:
-                    self.current_row = 0
+            if self.current_col >= self.g_W: # If end of row has been reached
+                self.current_col = 0  # Reset column to beginning
+                self.current_row += 1 # Go to next row
+                if self.current_row >= self.g_H: # If last row has been reached
+                    self.current_row = 0  # Reset row
 
 
         def changeCellColor(self, row, col, color):
@@ -127,12 +128,12 @@ def Set_Scanning_Tab(self):
     self.time_timer_scan=0
     self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text()) 
     
-    self.counter_Data_per_Pixel=0
+    self.counter_Data_per_Pixel=0 # Used for keeping track of current pixel
     self.current_col=0
     self.current_row=0
     self.New_Color= [255,255,255]
     self.scanning_Finish=False
-    #Counter for the N. of average samples 
+    #Counter for the N. of average samples: 
     self.Counter_DAQ_samples=0
     self.PSD_Avg_Moment=0
 
@@ -270,7 +271,7 @@ def Set_Scanning_Tab(self):
         self.color_grid_widget = ColorGrid(self.g_H,self.g_W,self.cell_size)
         self.ui.load_pages.Layout_table_Scan.addWidget(self.color_grid_widget)
         # Variables_Initialization
-        self.counter_Data_per_Pixel=0
+        self.counter_Data_per_Pixel=0 # used for determining current pixel
         self.counter_Step_Zaber_X=0
         self.current_col=0
         self.current_row=0
@@ -365,21 +366,24 @@ def Set_Scanning_Tab(self):
     # X-direction-scanning
     #Graphic_Data_Update
     def Change_Pixel_DAQ_X():
-        #Stop condition
-        #llego al final de una linea
+        
+        #Stop condition:
+        #Reach end of a line
         if self.counter_Data_per_Pixel >= (self.g_W):
             self.counter_Data_per_Pixel=0
-            Stop_z2() #Paro el movimiento
+            Stop_z2() # Stop the movement
             actual_pos=(self.Pos_Y1_Scan+(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)*self.counter_Step_Zaber_X))
             #Save Avg spectrum for each row
             self.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
             self.Data_Spectrum_Array=pd.DataFrame()
         
-            #Reinicio posiciones
+            # Reset positions
             self.counter_Step_Zaber_X+=1
-            new_x_pos=(self.Pos_Y1_Scan+(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)*self.counter_Step_Zaber_X))
+            new_x_pos=(self.Pos_Y1_Scan
+                        +(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)
+                        *self.counter_Step_Zaber_X))
             
-            if new_x_pos>=self.Pos_Y2_Scan:
+            if new_x_pos>=self.Pos_Y2_Scan: # Why is new x position compared with y position?
                 self.Adquisit_Timer.stop()
                 self.color_grid_widget.exportar_Matrix_CSV()
                 self.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
@@ -389,8 +393,10 @@ def Set_Scanning_Tab(self):
                 move_to_position(2,self.Pos_X1_Scan)
                 check_position_and_start_X(2,self.Pos_X1_Scan)
 
+        # End of line not reached:
         else:
-            #Desviation estimation, vectorized by row by pixel
+            #Deviation estimation, vectorized by row by pixel
+            
             factor_PSD = 2 / (self.number_of_samples * self.Laser_Frequency)
             self.Pixel_by_Row = self.Freq_Data.pow(2).mul(factor_PSD)
             M0_Pixel=self.Pixel_by_Row.sum(axis=0)
@@ -407,6 +413,7 @@ def Set_Scanning_Tab(self):
             
             
             self.dataAmp_Avg=(self.Freq_Data.mean(axis=1))
+            
             #Save Avg Spectrum
             self.Data_Spectrum_Array=pd.concat([self.Data_Spectrum_Array, self.dataAmp_Avg], axis=1)
             print('N Avg Samples')
@@ -416,31 +423,48 @@ def Set_Scanning_Tab(self):
                 self.dataAmp_Avg=self.dataFreq*0
                 self.Freq_Data=self.dataFreq*0
 
+            # Make PSD discrete, as original equation is time domain and
+            # contains integral to infinity:
             self.PSD_Avg_Moment=(self.dataAmp_Avg*self.dataAmp_Avg)*(2/(self.number_of_samples*self.Laser_Frequency))
+            
+            # Solve M0: simple sum of PSD.
             #self.PSD_Avg_Moment = self.PSD_Avg_Moment[:n // 2]
             M0 = np.sum(self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
-            # Solve division by 0
+            
+            # Solve division by 0.
             if M0==0:
                 M0=1
+                
+            # Solve M1: multiplication of the frequency and the PSD.
             M1 = np.sum(self.dataFreq * self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
             print('AVG Moment')
             print(M1/M0)
+            
+            # Save calculated moment to variable for flow velocity profile view.
             colorcolor=int(M1/M0)
-            #Reinicio conteo data average y vector
+            
+            # Reset count data average and vector.
             self.Counter_DAQ_samples=0
             self.Freq_Data=pd.DataFrame()
+            
+            # Determine color given to flow velocity profile pixel.
+            # Format is [R,G,B] so the pixel will be varying intensity of green.
+            # colorcolor => integer value of average momentum.
             self.New_Color=[0, interpolation_Color(colorcolor), 0] 
-            # ^determines color given to flow velocity profile pixel
-            # Format is [R,G,B] so the pixel will be varying intensity of green
-            # colorcolor => integer value of average momentum
-                        
+
+            # Apply new color to pixel in flow velocity profile view
+            # and save measured momentum to CSV file            
             self.color_grid_widget.changeCellColor(self.counter_Data_per_Pixel,self.counter_Step_Zaber_X, self.New_Color)
             self.color_grid_widget.updateCSV(self.counter_Step_Zaber_X-1,self.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
            
+            # Add one to data taken for this pixel
             self.counter_Data_per_Pixel+=1
+            
+            # Change current_column to ... next pixel?
             self.current_col= self.counter_Data_per_Pixel
 
-            if self.counter_Data_per_Pixel >= self.g_W:
+            # Why increment with one if the max width has been exceeded?
+            if self.counter_Data_per_Pixel >= self.g_W: 
                 self.counter_Data_per_Pixel += 1
 
 
