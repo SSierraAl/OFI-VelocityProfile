@@ -39,6 +39,8 @@ import subprocess as sp
 # MAIN WINDOW
 # ///////////////////////////////////////////////////////////////
 class MainWindow(QMainWindow):
+    """ Class for setting up window GUI interface
+    """
     def __init__(self):
         super().__init__()
 
@@ -99,20 +101,19 @@ class MainWindow(QMainWindow):
         # ///////////////////////////////////////////////////////////////
         
         # HOME BTN
-        if btn.objectName() == "btn_home":
+        if btn.objectName() == "btn_home": #display home page
             # Select Menu
             self.ui.left_menu.select_only_one(btn.objectName())
             MainFunctions.set_page(self, self.ui.load_pages.page_1)
 
 
-        # HOME BTN
+        # CALIBRATION BTN
         if btn.objectName() == "btn_search":
             # Select Menu
             self.ui.left_menu.select_only_one(btn.objectName())
             MainFunctions.set_page(self, self.ui.load_pages.page_calib)
 
-
-        # ZABER CONECTION
+        # ZABER CONECTION BTN
         # ///////////////////////////////////////////////////////////////
         if btn.objectName() == "btn_zaber":
             # Select Menu

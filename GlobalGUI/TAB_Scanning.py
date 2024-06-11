@@ -1,4 +1,6 @@
-
+"""TAB_Scanning.py is responsible for the movement of the Zaber and
+the data processing of the laser measurements, including the flow velocity profile
+"""
 
 from Frequency_Func import *
 import pyqtgraph as pg
@@ -11,7 +13,8 @@ from zaber_motion import Units
 from zaber_motion.binary import Connection,CommandCode
 
 def Set_Scanning_Tab(self):
-
+    """Creates the scanning tab in the widget
+    """
 
     ###################################################################
     ###################################################################
@@ -163,6 +166,21 @@ def Set_Scanning_Tab(self):
     ###################################################################
     #Color pixel adjustment
     def interpolation_Color(oldcolor):
+        """Adjusts the displayed color of flow velocity profile display 
+        -(dark green, bright green etc.)
+        The range of measurement value inputs (min_x, max_x) are converted to 
+        the same ratio but from 0 to 255. This can then be used for colors
+        
+        NOTE: take care in defining this values, if all measured values are 
+        lower than min_x, for example, you won't see any colors in the results.
+
+        Args:
+            oldcolor (integer): the average momentum measured by the laser
+
+        Returns:
+            newcolor (integer): the color value within a range of 0 to 255, 
+            with the lowest input resulting in 255, and max input in 0.
+        """
         min_x = 15000
         max_x = 37000
         min_y = 255
@@ -170,10 +188,12 @@ def Set_Scanning_Tab(self):
         newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
         return newcolor
 
-
     # Y-direction-scanning 
     def start_continuous_movement():
-
+        """Performs continous movement of Zaber NOTE: in Y direction.
+        Calculates time it takes to travel along entire distance and stops
+        the saber when this time, and thus distance, have passed.
+        """
         distance = abs(self.Pos_Y2_Scan - self.Pos_Y1_Scan)
         time_to_travel = (distance / float(self.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
         self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text()) 
@@ -188,6 +208,11 @@ def Set_Scanning_Tab(self):
 
     # X-direction-scanning 
     def start_continuous_movement_X():
+        """Performs continous movement of Zaber NOTE: in X direction.
+        Calculates time it takes to travel along entire distance and stops
+        the saber when this time, and thus distance, have passed.
+        """
+        
         distance = abs(self.Pos_X2_Scan - self.Pos_X1_Scan)
         time_to_travel = (distance / float(self.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
         self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text()) 
@@ -215,11 +240,16 @@ def Set_Scanning_Tab(self):
     # X-direction-scanning
     #Initial_Move
     def check_position_and_start_X(Zab, reference_Zab):
+        """Starts continuous movement along X if Zaber is in reference position
+        Otherwise, give command to move to reference position.
+        Args:
+            Zab (_type_): _description_
+            reference_Zab (_type_): _description_
+        """
         if abs(get_current_position(Zab) - reference_Zab) < 10:
             start_continuous_movement_X()
         else:
             QTimer.singleShot(500, check_position_and_start_X(Zab,reference_Zab))
-
 
     ###################################################################
     ###################################################################
@@ -244,7 +274,7 @@ def Set_Scanning_Tab(self):
         self.counter_Step_Zaber_X=0
         self.current_col=0
         self.current_row=0
-        self.New_Color= [255,255,255]
+        self.New_Color= [255,255,255] # [R,G,B] => WHITE
         # Move first to (X1,Y1)
         move_to_position(2,self.Pos_X1_Scan)
         move_to_position(0,self.Pos_Y1_Scan)
@@ -399,11 +429,14 @@ def Set_Scanning_Tab(self):
             #Reinicio conteo data average y vector
             self.Counter_DAQ_samples=0
             self.Freq_Data=pd.DataFrame()
-            self.New_Color=[0, interpolation_Color(colorcolor), 0]
-
+            self.New_Color=[0, interpolation_Color(colorcolor), 0] 
+            # ^determines color given to flow velocity profile pixel
+            # Format is [R,G,B] so the pixel will be varying intensity of green
+            # colorcolor => integer value of average momentum
+                        
             self.color_grid_widget.changeCellColor(self.counter_Data_per_Pixel,self.counter_Step_Zaber_X, self.New_Color)
             self.color_grid_widget.updateCSV(self.counter_Step_Zaber_X-1,self.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
-            
+           
             self.counter_Data_per_Pixel+=1
             self.current_col= self.counter_Data_per_Pixel
 
@@ -422,18 +455,10 @@ def Set_Scanning_Tab(self):
         self.Freq_Data=pd.concat([self.Freq_Data, amp], axis=1)
         self.Counter_DAQ_samples=self.Counter_DAQ_samples+1
 
-
-        
-
-
-
-
-
     ###################################################################
     ###################################################################
     #CALIBRATION
     def Start_Vel_Calib():
-
 
         #Parameters ###########################
         self.Directory=(self.ui.load_pages.lineEdit_Directory.text())
