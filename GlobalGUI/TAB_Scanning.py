@@ -54,7 +54,6 @@ def Set_Scanning_Tab(self):
             self.timer_Calib_Scan = QTimer(self)
             self.timer_Calib_Scan.setInterval(1000)  # Intervalo en milisegundos
             self.timer_Calib_Scan.timeout.connect(self.updatePixel)
-
             # Variables for traversing pixels
             self.current_row = 0
             self.current_col = 0
@@ -571,10 +570,23 @@ def Set_Scanning_Tab(self):
     self.Pixel_Interval = QTimer()
     self.Pixel_Interval.timeout.connect(Change_Pixel_DAQ)
 
+    # Continuous Sweep Routine
+    # Configure timer that determines sampling frequency
+    # NOTE: This timer determines how often the program requests the sampling data
+    # from the DAQ. After every interval, all the samples of the past interval are
+    # requested, and then the average is taken from that.
+    # NOTE: interval used to be 1ms, but had to be changed to 10 due to laptop
+    # performance. With a faster laptop, it can be returned to 1.
+    # NOTE: to compensate for this interval change, reduce the measurement speed
+    # by the same factor (so, 1/10th for example) if you want to keep the same samples / pixel.
+    # At the moment it has around 300 samples per pixel of 200 um, so this 
+    # can be reduced without issue.
     self.Adquisit_Timer = QTimer()
-    self.Adquisit_Timer.setInterval(1)
+    self.Adquisit_Timer.setInterval(10) # ISSUE here, works with 5 but unstable.
     self.Adquisit_Timer.timeout.connect(Capture_Data_Avg)
+    
     #For Calibration Routine
+    # Configure timer that determines sampling frequency
     self.Vel_Routine= QTimer()
     self.Vel_Routine.setInterval(1)
     self.Vel_Routine.timeout.connect(Vel_Routine)

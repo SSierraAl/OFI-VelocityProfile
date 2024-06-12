@@ -149,17 +149,18 @@ def InsertHomeGraphs(self):
 
 
 
-
+    # PLOT UPDATE INTERVAL SETTINGS
     self.timerPLOT = QTimer()
     self.timerPLOT.setInterval(40)
     self.timerPLOT.timeout.connect(updatePlotData_home)
 
+    # SAMPLING INTERVAL SETTINGS
+    # NOTE: this used to be 1ms interval, but performance of Frederik's laptop
+    # was not enough for 1 ms, had to be adjusted to 10.
     self.timerADQ = QTimer()
-    self.timerADQ.setInterval(1)
+    self.timerADQ.setInterval(10) # works with 10, used to 1 orginally
     self.timerADQ.timeout.connect(data_adquisition_home)
     
-
-
     def Init_Home_Plots():
         self.timerADQ.start()
         self.timerPLOT.start()
