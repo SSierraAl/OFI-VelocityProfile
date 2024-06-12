@@ -91,13 +91,17 @@ class DAQData(QObject):
 
     #Function to delete the thread.
     def deleteDAQ(self):
-        self.workerDAQ.stop()
-        self.threadDAQ.quit()
-        self.threadDAQ.wait()
-        # Reset the DAQ Device
-        system = nidaqmx.system.System.local()
-        for device in system.devices:
-            #if device.name == self.DAQ_Device:
-            device.reset_device()
-            print(f"Device {self.DAQ_Device} has been reset.")
+
+        try:
+            self.workerDAQ.stop()
+            self.threadDAQ.quit()
+            self.threadDAQ.wait()
+            # Reset the DAQ Device
+            system = nidaqmx.system.System.local()
+            for device in system.devices:
+                #if device.name == self.DAQ_Device:
+                device.reset_device()
+                print(f"Device {self.DAQ_Device} has been reset.")
+        except:
+            print("DAQ is still on")
 

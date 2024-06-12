@@ -29,8 +29,6 @@ def Set_DAQ_Functions(self):
         self.order_filter=4
         self.low_freq_filter=float(self.ui.load_pages.lineEdit_Low_Freq.text())
         self.high_freq_filter=float(self.ui.load_pages.lineEdit_High_Freq.text())
-        
-        
 
         #RMS average
         self.CounterAvg=0

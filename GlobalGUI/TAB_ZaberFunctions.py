@@ -9,12 +9,12 @@ from PySide6.QtCore import QTimer
 import time
 from scipy.signal import welch, get_window
 
-COM4="COM4"
+COM4="COM6"
 
 
 #---------- Init --------------#
 def InitializeZaber(self):
-    self.Zaber_COM="COM4"
+    self.Zaber_COM=COM4
     try:
         print("------- Zaber Initialization -------")
         with Connection.open_serial_port(self.Zaber_COM) as connection:
@@ -213,7 +213,7 @@ def InitializeZaber(self):
 
             #Constant speed     #######################################################
             def Stop_z1():
-                with Connection.open_serial_port("COM4") as connection:
+                with Connection.open_serial_port(COM4) as connection:
                     response = connection.generic_command(1, CommandCode.STOP, 1)
                     device_list = connection.detect_devices()
                     pos=((float(device_list[0].get_position()))*4.95/1039370)
@@ -251,37 +251,37 @@ def InitializeZaber(self):
             def Left_z1():
                 speed=float(self.ui.load_pages.z1speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port("COM4") as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int(-speed))
             
             def Left_z2():
                 speed=float(self.ui.load_pages.z2speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port("COM4") as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(2, CommandCode.MOVE_AT_CONSTANT_SPEED, int(-speed))
             
             def Left_z3():
                 speed=float(self.ui.load_pages.z3speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port("COM4") as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int(-speed))
             
             def Right_z1():
                 speed=float(self.ui.load_pages.z1speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port("COM4") as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int(speed))
             
             def Right_z2():
                 speed=float(self.ui.load_pages.z2speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port("COM4") as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(2, CommandCode.MOVE_AT_CONSTANT_SPEED, int(speed))
             
             def Right_z3():
                 speed=float(self.ui.load_pages.z3speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port("COM4") as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int(speed))
 
             # Button connections ######################################################
