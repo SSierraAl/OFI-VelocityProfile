@@ -15,7 +15,6 @@ from zaber_motion.binary import Connection,CommandCode
 def Set_Scanning_Tab(self):
     """Creates the scanning tab in the widget
     """
-
     ###################################################################
     ###################################################################
     #Graphic Widget
@@ -460,7 +459,7 @@ def Set_Scanning_Tab(self):
             # Add one to data taken for this pixel
             self.counter_Data_per_Pixel+=1
             
-            # Change current_column to ... next pixel?
+            # Change current_column to next pixel (next column)
             self.current_col= self.counter_Data_per_Pixel
 
             # Why increment with one if the max width has been exceeded?
