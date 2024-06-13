@@ -12,7 +12,7 @@ import zaber_motion
 from zaber_motion import Units
 from zaber_motion.binary import Connection,CommandCode
 
-import DAQ_Reader_Global
+import DAQ_Reader_Global # Import for use of stop_daq() function
 
 
 def Set_Scanning_Tab(self):
@@ -111,10 +111,23 @@ def Set_Scanning_Tab(self):
 
     # Reset widget to avoid multiple instances
     def reset_refrehs_scan():
+        '''Resets the grid for a new scan. Without this, a second grid will appear.
+        
+        CONDITIONS: grid must already be present, so a measurement must have already been performed.
+        It gives an error otherwise, as it cannot adjust/delete what does not exist yet.
+        '''
+        # Check if color_grid_widget exists or not
+        if not hasattr(self,'color_grid_widget'):
+            print("INFO: No grid to reset")
+            return
+        
         self.color_grid_widget.update_white()
         self.color_grid_widget.Stop_Grid_Scan()
-        if self.color_grid_widget is not None:
-            self.ui.load_pages.Layout_table_Scan.removeWidget(self.color_grid_widget)
+        self.ui.load_pages.Layout_table_Scan.removeWidget(self.color_grid_widget)
+        print("INFO: Flow Velocity Profile grid reset for new scan")
+
+    
+    
     #Button connections
     self.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(reset_refrehs_scan)
 
@@ -174,7 +187,7 @@ def Set_Scanning_Tab(self):
         The range of measurement value inputs (min_x, max_x) are converted to 
         the same ratio but from 0 to 255. This can then be used for colors
         
-        NOTE: take care in defining this values, if all measured values are 
+        NOTE: take care in defining these values, if all measured values are 
         lower than min_x, for example, you won't see any colors in the results.
 
         Args:
@@ -214,8 +227,7 @@ def Set_Scanning_Tab(self):
         """Performs continous movement of Zaber NOTE: in X direction.
         Calculates time it takes to travel along entire distance and stops
         the saber when this time, and thus distance, have passed.
-        """
-        
+        """        
         distance = abs(self.Pos_X2_Scan - self.Pos_X1_Scan)
         time_to_travel = (distance / float(self.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
         self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text()) 
@@ -259,6 +271,11 @@ def Set_Scanning_Tab(self):
     # Y-direction-scanning
     #General_Logic
     def Scan_Continuos_Y():
+        
+        # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
+        if hasattr(self,'color_grid_widget'):
+            reset_refrehs_scan()
+            
         #Update GUI Information
         self.speed = float(self.ui.load_pages.lineEdit_speed_ums.text()) / ((1.6381 / 1.9843))
         self.Pos_Y1_Scan = float(self.ui.load_pages.lineEdit_y1_scan.text())
@@ -286,6 +303,11 @@ def Set_Scanning_Tab(self):
     # Y-direction-scanning
     #General_Logic
     def Scan_Continuos_X():
+
+        # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
+        if hasattr(self,'color_grid_widget'):
+            reset_refrehs_scan()
+        
         #Update GUI Information
         self.speed = float(self.ui.load_pages.lineEdit_speed_ums.text())# / ((1.6381 / 1.9843))
         self.Pos_Y1_Scan = float(self.ui.load_pages.lineEdit_y1_scan.text())
@@ -293,12 +315,15 @@ def Set_Scanning_Tab(self):
         self.Pos_X1_Scan = float(self.ui.load_pages.lineEdit_x1_scan.text())
         self.Pos_X2_Scan = float(self.ui.load_pages.lineEdit_x2_scan.text())
         self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text())
+        
         #Update everything
         self.g_W=int((self.Pos_X2_Scan-self.Pos_X1_Scan)/self.cell_size)
         self.g_H=int((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.cell_size)
+        
         #Create Graph
         self.color_grid_widget = ColorGrid(self.g_H,self.g_W,self.cell_size)
         self.ui.load_pages.Layout_table_Scan.addWidget(self.color_grid_widget)
+        
         # Variables_Initialization
         self.counter_Data_per_Pixel=0
         self.counter_Step_Zaber_X=0
@@ -330,6 +355,10 @@ def Set_Scanning_Tab(self):
             #Move to te next X position
             new_x_pos=(self.Pos_X1_Scan+(((self.Pos_X2_Scan-self.Pos_X1_Scan)/self.g_W)*self.counter_Step_Zaber_X))
             if new_x_pos>=self.Pos_X2_Scan:
+                # Stop DAQ if it is running, causes crash otherwise
+                if hasattr (DAQ_Reader_Global.daq_instance, 'threadDAQ'):
+                    DAQ_Reader_Global.Stop_DAQ()
+                    
                 print('------  Scan finished --------')
                 self.Adquisit_Timer.stop()
             else:
@@ -387,13 +416,15 @@ def Set_Scanning_Tab(self):
             
             if new_x_pos>=self.Pos_Y2_Scan: # Why is new x position compared with y position?
                 
-                # DAQ needs to be stopped, otherwise system crash on new scan start
-                DAQ_Reader_Global.Stop_DAQ()
+                # Stop DAQ if it is already running, causes crash otherwise
+                if hasattr (DAQ_Reader_Global.daq_instance, 'threadDAQ'):
+                    DAQ_Reader_Global.Stop_DAQ()
                 
                 self.Adquisit_Timer.stop()
                 self.color_grid_widget.exportar_Matrix_CSV()
                 self.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
                 print('------  Scan finished --------')
+                print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
             else:
                 move_to_position(0,new_x_pos)
                 move_to_position(2,self.Pos_X1_Scan)
