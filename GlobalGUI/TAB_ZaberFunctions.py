@@ -225,6 +225,9 @@ def InitializeZaber(self):
                     pickle.dump(NewLine, file)
 
             def Stop_z2():
+                """ This function stops the X movement of the Zaber setup
+                """
+                
                 with Connection.open_serial_port(COM_port) as connection:
                     response = connection.generic_command(2, CommandCode.STOP, 1)
                     device_list = connection.detect_devices()
@@ -305,7 +308,7 @@ def InitializeZaber(self):
             self.ui.load_pages.z3_Set.clicked.connect(Set_z3)
             #Stop 
             self.ui.load_pages.z1_Stop.clicked.connect(Stop_z1)
-            self.ui.load_pages.z2_Stop.clicked.connect(Stop_z2)
+            self.ui.load_pages.z2_Stop.clicked.connect(Stop_z2) # Stop X direction
             self.ui.load_pages.z3_Stop.clicked.connect(Stop_z3)
             #Constant Speed
             self.ui.load_pages.z1_left.clicked.connect(Left_z1)

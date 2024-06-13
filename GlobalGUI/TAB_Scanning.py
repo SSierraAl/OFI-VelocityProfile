@@ -12,6 +12,9 @@ import zaber_motion
 from zaber_motion import Units
 from zaber_motion.binary import Connection,CommandCode
 
+import DAQ_Reader_Global
+
+
 def Set_Scanning_Tab(self):
     """Creates the scanning tab in the widget
     """
@@ -135,7 +138,7 @@ def Set_Scanning_Tab(self):
     self.Counter_DAQ_samples=0
     self.PSD_Avg_Moment=0
 
-
+    # Stop Zaber in Y orientation
     def Stop_z1():
         self.Pixel_Interval.stop()
         self.Pixel_Interval_X.stop()
@@ -143,6 +146,7 @@ def Set_Scanning_Tab(self):
         with Connection.open_serial_port(self.Zaber_COM) as connection:
             connection.generic_command(1, CommandCode.STOP, 1)
     
+    # Stop Zaber in X orientation
     def Stop_z2():
         self.Pixel_Interval.stop()
         self.Pixel_Interval_X.stop()
@@ -382,6 +386,10 @@ def Set_Scanning_Tab(self):
                         *self.counter_Step_Zaber_X))
             
             if new_x_pos>=self.Pos_Y2_Scan: # Why is new x position compared with y position?
+                
+                # DAQ needs to be stopped, otherwise system crash on new scan start
+                DAQ_Reader_Global.Stop_DAQ()
+                
                 self.Adquisit_Timer.stop()
                 self.color_grid_widget.exportar_Matrix_CSV()
                 self.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
@@ -591,11 +599,12 @@ def Set_Scanning_Tab(self):
     self.Vel_Routine.setInterval(1)
     self.Vel_Routine.timeout.connect(Vel_Routine)
 
+    # Link buttons to functions #
     self.ui.load_pages.Stop_x_but.clicked.connect(get_current_position)
     self.ui.load_pages.continuous_scanY_but.clicked.connect(Scan_Continuos_Y)
     self.ui.load_pages.continuous_scanX_but.clicked.connect(Scan_Continuos_X)
     self.ui.load_pages.Stop_Y_but.clicked.connect(Stop_z1)
-    self.ui.load_pages.Stop_x_but.clicked.connect(Stop_z2)
+    self.ui.load_pages.Stop_x_but.clicked.connect(Stop_z2) # Button for stopping X
     self.ui.load_pages.Vel_Start_Calib.clicked.connect(Start_Vel_Calib)
     self.ui.load_pages.Vel_Report.clicked.connect(Get_Report)
     ###################################################################

@@ -15,11 +15,17 @@ import Thread_DAQ_single as tds
 
 import pandas as pd
 
+# Global holder for daq instance, for use by Stop_DAQ()
+# This change was done so TAB_Scanning.py has access to the function.
+# A better way could be to define Set_DAQ_Functions() as a class
+daq_instance = None 
 
 
 def Set_DAQ_Functions(self):
-
-
+    # Define daq_instance for use by Stop_DAQ() which is now outside of this function
+    global daq_instance
+    daq_instance =  self
+        
     def Update_DAQ_Params(self):
         self.Laser_Frequency = float(self.ui.load_pages.lineEdit_Laser.text())
         self.fileSave=1
@@ -56,12 +62,6 @@ def Set_DAQ_Functions(self):
         print("------ DAQ Reading Mode: On -------")
 
 
-    def Stop_DAQ():
-        self.threadDAQ.deleteDAQ()
-        #self.timerPLOT.stop()
-        print("------ DAQ Reading Mode: Off -------")
-
-
     #Update DAQ Parameters in TAB DAQ
     self.ui.load_pages.DAQ_connect_but.clicked.connect(Init_DAQ_Connection)
     
@@ -72,9 +72,15 @@ def Set_DAQ_Functions(self):
     self.ui.load_pages.Vel_Start_Calib.clicked.connect(Init_DAQ_Connection)
     
     #Stop DAQ
-    self.ui.load_pages.Stop_x_but.clicked.connect(Stop_DAQ) 
+    self.ui.load_pages.Stop_x_but.clicked.connect(Stop_DAQ) #Stop X button
     self.ui.load_pages.Stop_Y_but.clicked.connect(Stop_DAQ) 
 
 
     self.ui.load_pages.Stop_DAQ_but.clicked.connect(Stop_DAQ) 
 
+# Function placed outside of Set_DAQ_Functions() so it can be used by TAB_Scanning.py
+def Stop_DAQ():
+    '''Stops the DAQ, so it can be started again by the next scan'''
+    daq_instance.threadDAQ.deleteDAQ()
+    #self.timerPLOT.stop()
+    print("------ DAQ Reading Mode: Off -------")
