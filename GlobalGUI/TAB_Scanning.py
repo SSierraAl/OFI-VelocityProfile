@@ -360,6 +360,7 @@ def Set_Scanning_Tab(self):
                     DAQ_Reader_Global.Stop_DAQ()
                     
                 print('------  Scan finished --------')
+                print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
                 self.Adquisit_Timer.stop()
             else:
                 move_to_position(2,new_x_pos)
