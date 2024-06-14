@@ -110,20 +110,20 @@ class Scan_functions:
         self.main_window = main_window
         
         # #Init
-        # self.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
-        # self.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
-        # self.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()) * 1000 * 1.6381 / 1.9843
-        # self.time_timer_scan=0
-        # self.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text()) 
+        self.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
+        self.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
+        self.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()) * 1000 * 1.6381 / 1.9843
+        self.time_timer_scan=0
+        self.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text()) 
         
-        # self.counter_Data_per_Pixel=0 # Used for keeping track of current pixel
-        # self.current_col=0
-        # self.current_row=0
-        # self.New_Color= [255,255,255]
-        # self.scanning_Finish=False
-        # #Counter for the N. of average samples: 
-        # self.Counter_DAQ_samples=0
-        # self.PSD_Avg_Moment=0
+        self.counter_Data_per_Pixel=0 # Used for keeping track of current pixel
+        self.current_col=0
+        self.current_row=0
+        self.New_Color= [255,255,255]
+        self.scanning_Finish=False
+        #Counter for the N. of average samples: 
+        self.Counter_DAQ_samples=0
+        self.PSD_Avg_Moment=0
 
         # Button connections
         self.main_window.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(self.reset_refresh_scan)
@@ -163,6 +163,45 @@ class Scan_functions:
         self.main_window.Adquisit_Timer.stop()
         with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
             connection.generic_command(3, CommandCode.STOP, 1)
+
+    # X-direction-scanning
+    def start_continuous_movement_x(self):
+        """Performs continous movement of Zaber NOTE: in X direction.
+        Calculates time it takes to travel along entire distance and stops
+        the saber when this time, and thus distance, have passed.
+        """
+        self.main_window.distance = abs(self.main_window.Pos_X2_Scan - self.main_window.Pos_X1_Scan)
+        self.main_window.time_to_travel = (self.main_window.distance / float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
+        self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text()) 
+        self.main_window.time_timer_scan=((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
+
+        try:
+            with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+                connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
+        except:
+            self.start_continuous_movement_x() # What is the purpose of this? Why does the y direction function not have it?
+
+        self.main_window.Pixel_Interval_X.setInterval(self.main_window.time_timer_scan)
+        self.main_window.Pixel_Interval_X.start()
+        self.main_window.Adquisit_Timer.start()
+
+    # Y-direction-scanning
+    def start_continuous_movement_y(self):
+        """Performs continous movement of Zaber NOTE: in Y direction.
+        Calculates time it takes to travel along entire distance and stops
+        the saber when this time, and thus distance, have passed.
+        """
+        self.main_window.distance = abs(self.main_window.Pos_Y2_Scan - self.main_window.Pos_Y1_Scan)
+        self.main_window.time_to_travel = (self.main_window.distance / float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
+        self.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
+        self.time_timer_scan=((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
+
+        with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+            connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int(self.main_window.speed))
+
+        self.main_window.Pixel_Interval.setInterval(self.main_window.time_timer_scan)
+        self.main_window.Pixel_Interval.start()
+        self.main_window.Adquisit_Timer.start()
 
 
 def Set_Scanning_Tab(self, scan_functionality):
@@ -220,56 +259,16 @@ def Set_Scanning_Tab(self, scan_functionality):
         newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
         return newcolor
 
-    # Y-direction-scanning 
-    def start_continuous_movement():
-        """Performs continous movement of Zaber NOTE: in Y direction.
-        Calculates time it takes to travel along entire distance and stops
-        the saber when this time, and thus distance, have passed.
-        """
-        distance = abs(self.Pos_Y2_Scan - self.Pos_Y1_Scan)
-        time_to_travel = (distance / float(self.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
-        self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text()) 
-        self.time_timer_scan=((time_to_travel/(distance/self.cell_size)))
-
-        with Connection.open_serial_port(self.Zaber_COM) as connection:
-            connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int(self.speed))
-        self.Pixel_Interval.setInterval(self.time_timer_scan)
-        self.Pixel_Interval.start()
-
-        self.Adquisit_Timer.start()
-
-    # X-direction-scanning 
-    def start_continuous_movement_X():
-        """Performs continous movement of Zaber NOTE: in X direction.
-        Calculates time it takes to travel along entire distance and stops
-        the saber when this time, and thus distance, have passed.
-        """        
-        distance = abs(self.Pos_X2_Scan - self.Pos_X1_Scan)
-        time_to_travel = (distance / float(self.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
-        self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text()) 
-        self.time_timer_scan=((time_to_travel/(distance/self.cell_size)))
-
-        try:
-            with Connection.open_serial_port(self.Zaber_COM) as connection:
-                connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.speed/1.55)/10)*1.6384/0.047625)    )    )#/0.047625)) #speed in um/s
-        except:
-            start_continuous_movement_X()
-
-        self.Pixel_Interval_X.setInterval(self.time_timer_scan)
-        self.Pixel_Interval_X.start()
-        self.Adquisit_Timer.start()
-    ###################################################################
-    ###################################################################
     # Y-direction-scanning
     #Initial_Move
     def check_position_and_start(Zab, reference_Zab):
         if abs(get_current_position(Zab) - reference_Zab) < 10:
-            start_continuous_movement()
+            scan_functionality.start_continuous_movement_y()
         else:
             QTimer.singleShot(500, check_position_and_start(Zab,reference_Zab))
 
-    # X-direction-scanning
-    #Initial_Move
+    # # X-direction-scanning
+    # #Initial_Move
     def check_position_and_start_X(Zab, reference_Zab):
         """Starts continuous movement along X if Zaber is in reference position
         Otherwise, give command to move to reference position.
@@ -278,7 +277,7 @@ def Set_Scanning_Tab(self, scan_functionality):
             reference_Zab (_type_): _description_
         """
         if abs(get_current_position(Zab) - reference_Zab) < 10:
-            start_continuous_movement_X()
+            scan_functionality.start_continuous_movement_x()
         else:
             QTimer.singleShot(500, check_position_and_start_X(Zab,reference_Zab))
 
