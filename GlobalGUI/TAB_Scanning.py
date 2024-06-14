@@ -14,120 +14,145 @@ from zaber_motion.binary import Connection,CommandCode
 
 import DAQ_Reader_Global # Import for use of stop_daq() function
 
-
-def Set_Scanning_Tab(self):
-    """Creates the scanning tab in the widget
-    """
     ###################################################################
     ###################################################################
     #Graphic Widget
-    class ColorGrid(QWidget):
-        def __init__(self, g_W, g_H, cell_size):
-            super().__init__()
-            self.g_W = g_W
-            self.g_H = g_H
-            self.cell_size = cell_size
+class ColorGrid(QWidget):
+    def __init__(self, g_W, g_H, cell_size):
+        super().__init__()
+        self.g_W = g_W
+        self.g_H = g_H
+        self.cell_size = cell_size
 
-            # Matrix to export CSV data
-            self.CSV_Moments_M0_Matrix=np.zeros((self.g_W,self.g_H))
-            self.CSV_Moments_M1_Matrix=np.zeros((self.g_W,self.g_H))
-            self.CSV_Moments_Matrix=np.zeros((self.g_W,self.g_H))
+        # Matrix to export CSV data
+        self.CSV_Moments_M0_Matrix=np.zeros((self.g_W,self.g_H))
+        self.CSV_Moments_M1_Matrix=np.zeros((self.g_W,self.g_H))
+        self.CSV_Moments_Matrix=np.zeros((self.g_W,self.g_H))
 
-            # Create PlotItem and add it to the GraphicsLayout
-            self.graphicsView = pg.GraphicsView()
-            self.graphicsView.setBackgroundBrush(QColor('white'))
-            self.graphicsLayout = pg.GraphicsLayout()
-            self.graphicsView.setCentralItem(self.graphicsLayout)
+        # Create PlotItem and add it to the GraphicsLayout
+        self.graphicsView = pg.GraphicsView()
+        self.graphicsView.setBackgroundBrush(QColor('white'))
+        self.graphicsLayout = pg.GraphicsLayout()
+        self.graphicsView.setCentralItem(self.graphicsLayout)
 
-            # Create PlotItem and add it to the GraphicsLayout
-            self.plotItem = self.graphicsLayout.addPlot()
-            self.plotItem.showGrid(x=True, y=True)
-            self.plotItem.setRange(xRange=(0, self.g_W), yRange=(0, self.g_H), padding=0)
-            
-            # Create the ImageItem and add it to the PlotItem
-            self.imageItem = pg.ImageItem()
-            self.plotItem.addItem(self.imageItem)
-            self.plotItem.getViewBox().setBackgroundColor('w')
-            self.gridArray = np.ones((self.g_H, self.g_W, 3), dtype=np.uint8)*255
+        # Create PlotItem and add it to the GraphicsLayout
+        self.plotItem = self.graphicsLayout.addPlot()
+        self.plotItem.showGrid(x=True, y=True)
+        self.plotItem.setRange(xRange=(0, self.g_W), yRange=(0, self.g_H), padding=0)
+        
+        # Create the ImageItem and add it to the PlotItem
+        self.imageItem = pg.ImageItem()
+        self.plotItem.addItem(self.imageItem)
+        self.plotItem.getViewBox().setBackgroundColor('w')
+        self.gridArray = np.ones((self.g_H, self.g_W, 3), dtype=np.uint8)*255
 
-            # Configure the design
-            layout = QVBoxLayout(self)
-            layout.addWidget(self.graphicsView)
+        # Configure the design
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.graphicsView)
 
-            self.timer_Calib_Scan = QTimer(self)
-            self.timer_Calib_Scan.setInterval(1000)  # Intervalo en milisegundos
-            self.timer_Calib_Scan.timeout.connect(self.updatePixel)
-            # Variables for traversing pixels
-            self.current_row = 0
-            self.current_col = 0
-
-
-        def updatePixel(self):
-
-            # Change the colour of the current pixel
-            self.gridArray[self.current_row, self.current_col] = [255, 0, 0]  # Red
-            # Updating the image
-            self.imageItem.setImage(self.gridArray, autoLevels=False)
-            # Move to the next pixel
-            self.current_col += 1
-            if self.current_col >= self.g_W: # If end of row has been reached
-                self.current_col = 0  # Reset column to beginning
-                self.current_row += 1 # Go to next row
-                if self.current_row >= self.g_H: # If last row has been reached
-                    self.current_row = 0  # Reset row
+        self.timer_Calib_Scan = QTimer(self)
+        self.timer_Calib_Scan.setInterval(1000)  # Intervalo en milisegundos
+        self.timer_Calib_Scan.timeout.connect(self.updatePixel)
+        # Variables for traversing pixels
+        self.current_row = 0
+        self.current_col = 0
 
 
-        def changeCellColor(self, row, col, color):
-            self.gridArray[row, col] = color
-            self.imageItem.setImage(self.gridArray, autoLevels=False)
+    def updatePixel(self):
 
-        def Start_Grid_Scan(self):
-            self.timer_Calib_Scan.start()
-
-        def Stop_Grid_Scan(self):
-            self.timer_Calib_Scan.stop()
-
-        def update_white(self):
-            self.gridArray = np.zeros((self.g_H, self.g_W, 3), dtype=np.uint8)*255
-            self.imageItem.setImage(self.gridArray, autoLevels=False)
-
-        ### Export CSV functions
-        def updateCSV(self, row, col, Moment, M0, M1):
-            self.CSV_Moments_Matrix[row, col] = Moment
-            self.CSV_Moments_M0_Matrix[row, col] = M0
-            self.CSV_Moments_M1_Matrix[row, col] = M1
+        # Change the colour of the current pixel
+        self.gridArray[self.current_row, self.current_col] = [255, 0, 0]  # Red
+        # Updating the image
+        self.imageItem.setImage(self.gridArray, autoLevels=False)
+        # Move to the next pixel
+        self.current_col += 1
+        if self.current_col >= self.g_W: # If end of row has been reached
+            self.current_col = 0  # Reset column to beginning
+            self.current_row += 1 # Go to next row
+            if self.current_row >= self.g_H: # If last row has been reached
+                self.current_row = 0  # Reset row
 
 
-        def exportar_Matrix_CSV(self):
-            df = pd.DataFrame(self.CSV_Moments_Matrix)
-            df.to_csv('Scanning_Moments_CSV.csv', index=True)
-            df = pd.DataFrame(self.CSV_Moments_M0_Matrix)
-            df.to_csv('Scanning_Moments_M0_CSV.csv', index=True)
-            df = pd.DataFrame(self.CSV_Moments_M1_Matrix)
-            df.to_csv('Scanning_Moments_M1_CSV.csv', index=True)
+    def changeCellColor(self, row, col, color):
+        self.gridArray[row, col] = color
+        self.imageItem.setImage(self.gridArray, autoLevels=False)
+
+    def Start_Grid_Scan(self):
+        self.timer_Calib_Scan.start()
+
+    def Stop_Grid_Scan(self):
+        self.timer_Calib_Scan.stop()
+
+    def update_white(self):
+        self.gridArray = np.zeros((self.g_H, self.g_W, 3), dtype=np.uint8)*255
+        self.imageItem.setImage(self.gridArray, autoLevels=False)
+
+    ### Export CSV functions
+    def updateCSV(self, row, col, Moment, M0, M1):
+        self.CSV_Moments_Matrix[row, col] = Moment
+        self.CSV_Moments_M0_Matrix[row, col] = M0
+        self.CSV_Moments_M1_Matrix[row, col] = M1
+
+
+    def exportar_Matrix_CSV(self):
+        df = pd.DataFrame(self.CSV_Moments_Matrix)
+        df.to_csv('Scanning_Moments_CSV.csv', index=True)
+        df = pd.DataFrame(self.CSV_Moments_M0_Matrix)
+        df.to_csv('Scanning_Moments_M0_CSV.csv', index=True)
+        df = pd.DataFrame(self.CSV_Moments_M1_Matrix)
+        df.to_csv('Scanning_Moments_M1_CSV.csv', index=True)
 
     ###################################################################
     ###################################################################
 
-    # Reset widget to avoid multiple instances
-    def reset_refrehs_scan():
+class Scan_functions:
+    def __init__(self, main_window):
+        self.main_window = main_window
+    
+    def reset_refrehs_scan(self):
         '''Resets the grid for a new scan. Without this, a second grid will appear.
         
         CONDITIONS: grid must already be present, so a measurement must have already been performed.
         It gives an error otherwise, as it cannot adjust/delete what does not exist yet.
         '''
         # Check if color_grid_widget exists or not
-        if not hasattr(self,'color_grid_widget'):
+        if not hasattr(self,'color_grid_widget'): # was self.main_window
             print("INFO: No grid to reset")
             return
         
-        self.color_grid_widget.update_white()
-        self.color_grid_widget.Stop_Grid_Scan()
-        self.ui.load_pages.Layout_table_Scan.removeWidget(self.color_grid_widget)
+        # The color_grid_widget is dynamically added, so pylint gives an error on the follow lines.
+        # This error is disabled for the specific lines using the disable comments.
+        self.color_grid_widget.update_white() # pylint: disable=no-member
+        self.color_grid_widget.Stop_Grid_Scan() # pylint: disable=no-member
+        self.ui.load_pages.Layout_table_Scan.removeWidget(self.color_grid_widget) # pylint: disable=no-member
         print("INFO: Flow Velocity Profile grid reset for new scan")
 
+
+def Set_Scanning_Tab(self):
+    """Creates the scanning tab in the widget
+    """
+
+    # Reset widget to avoid multiple instances
+    # def reset_refrehs_scan():
+    #     '''Resets the grid for a new scan. Without this, a second grid will appear.
+        
+    #     CONDITIONS: grid must already be present, so a measurement must have already been performed.
+    #     It gives an error otherwise, as it cannot adjust/delete what does not exist yet.
+    #     '''
+    #     # Check if color_grid_widget exists or not
+    #     if not hasattr(self,'color_grid_widget'):
+    #         print("INFO: No grid to reset")
+    #         return
+        
+    #     self.color_grid_widget.update_white()
+    #     self.color_grid_widget.Stop_Grid_Scan()
+    #     self.ui.load_pages.Layout_table_Scan.removeWidget(self.color_grid_widget)
+    #     print("INFO: Flow Velocity Profile grid reset for new scan")
+
+    
+    
     #Button connections
-    self.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(reset_refrehs_scan)
+    self.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(Scan_functions.reset_refrehs_scan)
 
     ###################################################################
     ###################################################################
@@ -272,7 +297,7 @@ def Set_Scanning_Tab(self):
         
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
         if hasattr(self,'color_grid_widget'):
-            reset_refrehs_scan()
+            Scan_functions.reset_refrehs_scan(self)
             
         #Update GUI Information
         self.speed = float(self.ui.load_pages.lineEdit_speed_ums.text()) / ((1.6381 / 1.9843))
@@ -304,7 +329,7 @@ def Set_Scanning_Tab(self):
 
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
         if hasattr(self,'color_grid_widget'):
-            reset_refrehs_scan()
+            Scan_functions.reset_refrehs_scan(self)
         
         #Update GUI Information
         self.speed = float(self.ui.load_pages.lineEdit_speed_ums.text())# / ((1.6381 / 1.9843))
@@ -622,7 +647,7 @@ def Set_Scanning_Tab(self):
     self.Adquisit_Timer = QTimer()
     self.Adquisit_Timer.setInterval(10) # ISSUE here, works with 5 but unstable.
     self.Adquisit_Timer.timeout.connect(Capture_Data_Avg)
-
+    
     #For Calibration Routine
     # Configure timer that determines sampling frequency
     self.Vel_Routine= QTimer()
@@ -639,3 +664,6 @@ def Set_Scanning_Tab(self):
     self.ui.load_pages.Vel_Report.clicked.connect(Get_Report)
     ###################################################################
     ###################################################################
+            
+
+   
