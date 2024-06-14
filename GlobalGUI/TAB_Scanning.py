@@ -126,8 +126,6 @@ def Set_Scanning_Tab(self):
         self.ui.load_pages.Layout_table_Scan.removeWidget(self.color_grid_widget)
         print("INFO: Flow Velocity Profile grid reset for new scan")
 
-    
-    
     #Button connections
     self.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(reset_refrehs_scan)
 
@@ -624,7 +622,7 @@ def Set_Scanning_Tab(self):
     self.Adquisit_Timer = QTimer()
     self.Adquisit_Timer.setInterval(10) # ISSUE here, works with 5 but unstable.
     self.Adquisit_Timer.timeout.connect(Capture_Data_Avg)
-    
+
     #For Calibration Routine
     # Configure timer that determines sampling frequency
     self.Vel_Routine= QTimer()
@@ -641,6 +639,3 @@ def Set_Scanning_Tab(self):
     self.ui.load_pages.Vel_Report.clicked.connect(Get_Report)
     ###################################################################
     ###################################################################
-            
-
-   

@@ -1,0 +1,22 @@
+""" Module responsible for determining the center reference position and image processing
+"""
+from TAB_Scanning import Set_Scanning_Tab
+
+def edge_scan(direction, start_coordinates):
+    """performs a scan in a direction and returns the Zaber (X,Y) coordinates
+    of first encountered edge.
+
+    Args:
+        direction (string): 'x', '-x', 'y' , '-y'
+        start_coordinates (_type_): (X,Y) tuple
+
+    Returns:
+        tuple: tuple containing (X,Y)
+    """
+    if direction == 'x':
+        x = None #placeholder
+        y = None #placeholder
+
+    edge_coordinates = (x,y)
+    
+    return edge_coordinates 
