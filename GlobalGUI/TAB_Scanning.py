@@ -108,63 +108,72 @@ class ColorGrid(QWidget):
 class Scan_functions:
     def __init__(self, main_window):
         self.main_window = main_window
-    
-    def reset_refrehs_scan(self):
+        
+        # #Init
+        # self.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
+        # self.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
+        # self.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()) * 1000 * 1.6381 / 1.9843
+        # self.time_timer_scan=0
+        # self.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text()) 
+        
+        # self.counter_Data_per_Pixel=0 # Used for keeping track of current pixel
+        # self.current_col=0
+        # self.current_row=0
+        # self.New_Color= [255,255,255]
+        # self.scanning_Finish=False
+        # #Counter for the N. of average samples: 
+        # self.Counter_DAQ_samples=0
+        # self.PSD_Avg_Moment=0
+
+        # Button connections
+        self.main_window.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(self.reset_refresh_scan)
+        self.main_window.ui.load_pages.Stop_Y_but.clicked.connect(self.Stop_z1)
+        self.main_window.ui.load_pages.Stop_x_but.clicked.connect(self.Stop_z2) # Button for stopping X
+        
+    def reset_refresh_scan(self):
         '''Resets the grid for a new scan. Without this, a second grid will appear.
         
         CONDITIONS: grid must already be present, so a measurement must have already been performed.
         It gives an error otherwise, as it cannot adjust/delete what does not exist yet.
         '''
         # Check if color_grid_widget exists or not
-        if not hasattr(self,'color_grid_widget'): # was self.main_window
+        if not hasattr(self.main_window,'color_grid_widget'): # was self.main_window
             print("INFO: No grid to reset")
             return
         
         # The color_grid_widget is dynamically added, so pylint gives an error on the follow lines.
         # This error is disabled for the specific lines using the disable comments.
-        self.color_grid_widget.update_white() # pylint: disable=no-member
-        self.color_grid_widget.Stop_Grid_Scan() # pylint: disable=no-member
-        self.ui.load_pages.Layout_table_Scan.removeWidget(self.color_grid_widget) # pylint: disable=no-member
+        self.main_window.color_grid_widget.update_white()
+        self.main_window.color_grid_widget.Stop_Grid_Scan()
+        self.main_window.ui.load_pages.Layout_table_Scan.removeWidget(self.main_window.color_grid_widget)
         print("INFO: Flow Velocity Profile grid reset for new scan")
 
+    # Stop Zaber in Y orientation
+    def Stop_z1(self):
+        self.main_window.Pixel_Interval.stop()
+        self.main_window.Pixel_Interval_X.stop()
+        self.main_window.Adquisit_Timer.stop()
+        with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+            connection.generic_command(1, CommandCode.STOP, 1)
 
-def Set_Scanning_Tab(self):
+    # Stop Zaber in X orientation
+    def Stop_z2(self):
+        self.main_window.Pixel_Interval.stop()
+        self.main_window.Pixel_Interval_X.stop()
+        self.main_window.Adquisit_Timer.stop()
+        with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+            connection.generic_command(3, CommandCode.STOP, 1)
+
+
+def Set_Scanning_Tab(self, scan_functionality):
     """Creates the scanning tab in the widget
     """
-
-    # Reset widget to avoid multiple instances
-    # def reset_refrehs_scan():
-    #     '''Resets the grid for a new scan. Without this, a second grid will appear.
-        
-    #     CONDITIONS: grid must already be present, so a measurement must have already been performed.
-    #     It gives an error otherwise, as it cannot adjust/delete what does not exist yet.
-    #     '''
-    #     # Check if color_grid_widget exists or not
-    #     if not hasattr(self,'color_grid_widget'):
-    #         print("INFO: No grid to reset")
-    #         return
-        
-    #     self.color_grid_widget.update_white()
-    #     self.color_grid_widget.Stop_Grid_Scan()
-    #     self.ui.load_pages.Layout_table_Scan.removeWidget(self.color_grid_widget)
-    #     print("INFO: Flow Velocity Profile grid reset for new scan")
-
-    
-    
-    #Button connections
-    self.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(Scan_functions.reset_refrehs_scan)
-
-    ###################################################################
-    ###################################################################
-    #Zaber Functions
-
     #Initialization
     self.Pos_Y1_Scan = float(self.ui.load_pages.lineEdit_y1_scan.text())
     self.Pos_Y2_Scan = float(self.ui.load_pages.lineEdit_y2_scan.text())
     self.speed = float(self.ui.load_pages.lineEdit_speed_ums.text()) * 1000 * 1.6381 / 1.9843
     self.time_timer_scan=0
-    self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text()) 
-    
+    self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text())
     self.counter_Data_per_Pixel=0 # Used for keeping track of current pixel
     self.current_col=0
     self.current_row=0
@@ -173,22 +182,6 @@ def Set_Scanning_Tab(self):
     #Counter for the N. of average samples: 
     self.Counter_DAQ_samples=0
     self.PSD_Avg_Moment=0
-
-    # Stop Zaber in Y orientation
-    def Stop_z1():
-        self.Pixel_Interval.stop()
-        self.Pixel_Interval_X.stop()
-        self.Adquisit_Timer.stop()
-        with Connection.open_serial_port(self.Zaber_COM) as connection:
-            connection.generic_command(1, CommandCode.STOP, 1)
-    
-    # Stop Zaber in X orientation
-    def Stop_z2():
-        self.Pixel_Interval.stop()
-        self.Pixel_Interval_X.stop()
-        self.Adquisit_Timer.stop()
-        with Connection.open_serial_port(self.Zaber_COM) as connection:
-            connection.generic_command(3, CommandCode.STOP, 1)
 
     def move_to_position(Zab,position):
         with Connection.open_serial_port(self.Zaber_COM) as connection:
@@ -297,7 +290,7 @@ def Set_Scanning_Tab(self):
         
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
         if hasattr(self,'color_grid_widget'):
-            Scan_functions.reset_refrehs_scan(self)
+            scan_functionality.reset_refresh_scan()
             
         #Update GUI Information
         self.speed = float(self.ui.load_pages.lineEdit_speed_ums.text()) / ((1.6381 / 1.9843))
@@ -329,7 +322,7 @@ def Set_Scanning_Tab(self):
 
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
         if hasattr(self,'color_grid_widget'):
-            Scan_functions.reset_refrehs_scan(self)
+            scan_functionality.reset_refresh_scan()
         
         #Update GUI Information
         self.speed = float(self.ui.load_pages.lineEdit_speed_ums.text())# / ((1.6381 / 1.9843))
@@ -372,7 +365,7 @@ def Set_Scanning_Tab(self):
         #The final Y position is reach
         if self.counter_Data_per_Pixel >= (self.g_H):
             self.counter_Data_per_Pixel=0
-            Stop_z1() #Stop the movement
+            Scan_functions.Stop_z1(self) #Stop the movement
             #Reset the position
             self.counter_Step_Zaber_X+=1
             #Move to te next X position
@@ -426,7 +419,7 @@ def Set_Scanning_Tab(self):
         #Reach end of a line
         if self.counter_Data_per_Pixel >= (self.g_W):
             self.counter_Data_per_Pixel=0
-            Stop_z2() # Stop the movement
+            scan_functionality.Stop_z2() # Stop the movement
             actual_pos=(self.Pos_Y1_Scan+(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)*self.counter_Step_Zaber_X))
             #Save Avg spectrum for each row
             self.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
@@ -658,8 +651,8 @@ def Set_Scanning_Tab(self):
     self.ui.load_pages.Stop_x_but.clicked.connect(get_current_position)
     self.ui.load_pages.continuous_scanY_but.clicked.connect(Scan_Continuos_Y)
     self.ui.load_pages.continuous_scanX_but.clicked.connect(Scan_Continuos_X)
-    self.ui.load_pages.Stop_Y_but.clicked.connect(Stop_z1)
-    self.ui.load_pages.Stop_x_but.clicked.connect(Stop_z2) # Button for stopping X
+    # self.ui.load_pages.Stop_Y_but.clicked.connect(Stop_z1)
+    # self.ui.load_pages.Stop_x_but.clicked.connect(Stop_z2) # Button for stopping X
     self.ui.load_pages.Vel_Start_Calib.clicked.connect(Start_Vel_Calib)
     self.ui.load_pages.Vel_Report.clicked.connect(Get_Report)
     ###################################################################

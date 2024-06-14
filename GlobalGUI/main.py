@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
         # SET SCANNING TAB
         # ///////////////////////////////////////////////////////////////
         scan_functionality = Scan_functions(self)
-        Set_Scanning_Tab(self)
+        Set_Scanning_Tab(self, scan_functionality)
 
 
         # ///////////////////////////////////////////////////////////////
