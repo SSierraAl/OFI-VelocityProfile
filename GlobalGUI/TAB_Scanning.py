@@ -202,6 +202,30 @@ class Scan_functions:
         self.main_window.Pixel_Interval.setInterval(self.main_window.time_timer_scan)
         self.main_window.Pixel_Interval.start()
         self.main_window.Adquisit_Timer.start()
+        
+        #Color pixel adjustment
+    def interpolation_Color(self, oldcolor):
+        """Adjusts the displayed color of flow velocity profile display 
+        -(dark green, bright green etc.)
+        The range of measurement value inputs (min_x, max_x) are converted to 
+        the same ratio but from 0 to 255. This can then be used for colors
+        
+        NOTE: take care in defining these values, if all measured values are 
+        lower than min_x, for example, you won't see any colors in the results.
+
+        Args:
+            oldcolor (integer): the average momentum measured by the laser
+
+        Returns:
+            newcolor (integer): the color value within a range of 0 to 255, 
+            with the lowest input resulting in 255, and max input in 0.
+        """
+        min_x = 15000
+        max_x = 37000
+        min_y = 255
+        max_y = 0
+        newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
+        return newcolor
 
 
 def Set_Scanning_Tab(self, scan_functionality):
@@ -235,29 +259,7 @@ def Set_Scanning_Tab(self, scan_functionality):
 
     ###################################################################
     ###################################################################
-    #Color pixel adjustment
-    def interpolation_Color(oldcolor):
-        """Adjusts the displayed color of flow velocity profile display 
-        -(dark green, bright green etc.)
-        The range of measurement value inputs (min_x, max_x) are converted to 
-        the same ratio but from 0 to 255. This can then be used for colors
-        
-        NOTE: take care in defining these values, if all measured values are 
-        lower than min_x, for example, you won't see any colors in the results.
 
-        Args:
-            oldcolor (integer): the average momentum measured by the laser
-
-        Returns:
-            newcolor (integer): the color value within a range of 0 to 255, 
-            with the lowest input resulting in 255, and max input in 0.
-        """
-        min_x = 15000
-        max_x = 37000
-        min_y = 255
-        max_y = 0
-        newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
-        return newcolor
 
     # Y-direction-scanning
     #Initial_Move
@@ -394,7 +396,7 @@ def Set_Scanning_Tab(self, scan_functionality):
             print('AVG Moment')
             colorcolor=int(M1/M0)
             print(colorcolor)
-            newcolor=interpolation_Color(colorcolor)
+            newcolor=scan_functionality.interpolation_Color(colorcolor)
 
             print('end AVG Moment')
             #Restart counter and variable
@@ -487,23 +489,23 @@ def Set_Scanning_Tab(self, scan_functionality):
             # Solve division by 0.
             if M0==0:
                 M0=1
-                
+     
             # Solve M1: multiplication of the frequency and the PSD.
             M1 = np.sum(self.dataFreq * self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
             print('AVG Moment')
             print(M1/M0)
-            
+
             # Save calculated moment to variable for flow velocity profile view.
             colorcolor=int(M1/M0)
-            
+
             # Reset count data average and vector.
             self.Counter_DAQ_samples=0
             self.Freq_Data=pd.DataFrame()
-            
+
             # Determine color given to flow velocity profile pixel.
             # Format is [R,G,B] so the pixel will be varying intensity of green.
             # colorcolor => integer value of average momentum.
-            self.New_Color=[0, interpolation_Color(colorcolor), 0] 
+            self.New_Color=[0, scan_functionality.interpolation_Color(colorcolor), 0]
 
             # Apply new color to pixel in flow velocity profile view
             # and save measured momentum to CSV file            
