@@ -163,6 +163,17 @@ class Scan_functions:
         self.main_window.Adquisit_Timer.stop()
         with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
             connection.generic_command(3, CommandCode.STOP, 1)
+            
+    def move_to_position(self, Zab,position):
+        with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+            device_list = connection.detect_devices()
+            device_list[Zab].move_absolute(position, Units.LENGTH_MICROMETRES)
+
+    def get_current_position(self, Zab):
+        with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+            device_list = connection.detect_devices()
+            act_pos=device_list[Zab].get_position(Units.LENGTH_MICROMETRES)
+            return act_pos
 
     # X-direction-scanning
     def start_continuous_movement_x(self):
@@ -226,6 +237,8 @@ class Scan_functions:
         max_y = 0
         newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
         return newcolor
+    
+    
 
 
 def Set_Scanning_Tab(self, scan_functionality):
@@ -246,16 +259,7 @@ def Set_Scanning_Tab(self, scan_functionality):
     self.Counter_DAQ_samples=0
     self.PSD_Avg_Moment=0
 
-    def move_to_position(Zab,position):
-        with Connection.open_serial_port(self.Zaber_COM) as connection:
-            device_list = connection.detect_devices()
-            device_list[Zab].move_absolute(position, Units.LENGTH_MICROMETRES)
-
-    def get_current_position(Zab):
-        with Connection.open_serial_port(self.Zaber_COM) as connection:
-            device_list = connection.detect_devices()
-            act_pos=device_list[Zab].get_position(Units.LENGTH_MICROMETRES)
-            return act_pos
+   
 
     ###################################################################
     ###################################################################
@@ -264,7 +268,7 @@ def Set_Scanning_Tab(self, scan_functionality):
     # Y-direction-scanning
     #Initial_Move
     def check_position_and_start(Zab, reference_Zab):
-        if abs(get_current_position(Zab) - reference_Zab) < 10:
+        if abs(scan_functionality.get_current_position(Zab) - reference_Zab) < 10:
             scan_functionality.start_continuous_movement_y()
         else:
             QTimer.singleShot(500, check_position_and_start(Zab,reference_Zab))
@@ -278,7 +282,7 @@ def Set_Scanning_Tab(self, scan_functionality):
             Zab (_type_): _description_
             reference_Zab (_type_): _description_
         """
-        if abs(get_current_position(Zab) - reference_Zab) < 10:
+        if abs(scan_functionality.get_current_position(Zab) - reference_Zab) < 10:
             scan_functionality.start_continuous_movement_x()
         else:
             QTimer.singleShot(500, check_position_and_start_X(Zab,reference_Zab))
@@ -313,8 +317,8 @@ def Set_Scanning_Tab(self, scan_functionality):
         self.current_row=0
         self.New_Color= [255,255,255] # [R,G,B] => WHITE
         # Move first to (X1,Y1)
-        move_to_position(2,self.Pos_X1_Scan)
-        move_to_position(0,self.Pos_Y1_Scan)
+        scan_functionality.move_to_position(2,self.Pos_X1_Scan)
+        scan_functionality.move_to_position(0,self.Pos_Y1_Scan)
         check_position_and_start(0,self.Pos_Y1_Scan)
     
     # Y-direction-scanning
@@ -353,8 +357,8 @@ def Set_Scanning_Tab(self, scan_functionality):
         self.Samples_to_AVG=0
         self.Samples_To_AVG_Flag=True
         # Move first to (X1,Y1)
-        move_to_position(0,self.Pos_Y1_Scan)
-        move_to_position(2,self.Pos_X1_Scan)
+        scan_functionality.move_to_position(0,self.Pos_Y1_Scan)
+        scan_functionality.move_to_position(2,self.Pos_X1_Scan)
         check_position_and_start_X(2,self.Pos_X1_Scan)
 
     ###################################################################
@@ -380,8 +384,8 @@ def Set_Scanning_Tab(self, scan_functionality):
                 print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
                 self.Adquisit_Timer.stop()
             else:
-                move_to_position(2,new_x_pos)
-                move_to_position(0,self.Pos_Y1_Scan)
+                scan_functionality.move_to_position(2,new_x_pos)
+                scan_functionality.move_to_position(0,self.Pos_Y1_Scan)
                 check_position_and_start(0,self.Pos_Y1_Scan)
         else:
             #AVG FFT
@@ -444,8 +448,8 @@ def Set_Scanning_Tab(self, scan_functionality):
                 print('------  Scan finished --------')
                 print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
             else:
-                move_to_position(0,new_x_pos)
-                move_to_position(2,self.Pos_X1_Scan)
+                scan_functionality.move_to_position(0,new_x_pos)
+                scan_functionality.move_to_position(2,self.Pos_X1_Scan)
                 check_position_and_start_X(2,self.Pos_X1_Scan)
 
         # End of line not reached:
@@ -649,7 +653,7 @@ def Set_Scanning_Tab(self, scan_functionality):
     self.Vel_Routine.timeout.connect(Vel_Routine)
 
     # Link buttons to functions #
-    self.ui.load_pages.Stop_x_but.clicked.connect(get_current_position)
+    self.ui.load_pages.Stop_x_but.clicked.connect(scan_functionality.get_current_position)
     self.ui.load_pages.continuous_scanY_but.clicked.connect(Scan_Continuos_Y)
     self.ui.load_pages.continuous_scanX_but.clicked.connect(Scan_Continuos_X)
     # self.ui.load_pages.Stop_Y_but.clicked.connect(Stop_z1)
