@@ -195,6 +195,20 @@ class Scan_functions:
         self.main_window.Pixel_Interval_X.setInterval(self.main_window.time_timer_scan)
         self.main_window.Pixel_Interval_X.start()
         self.main_window.Adquisit_Timer.start()
+        
+    # X-direction-scanning
+    # #Initial_Move
+    def check_position_and_start_X(self, Zab, reference_Zab):
+        """Starts continuous movement along X if Zaber is in reference position
+        Otherwise, give command to move to reference position.
+        Args:
+            Zab (_type_): _description_
+            reference_Zab (_type_): _description_
+        """
+        if abs(self.get_current_position(Zab) - reference_Zab) < 10:
+            self.start_continuous_movement_x()
+        else:
+            QTimer.singleShot(500, self.main_window.check_position_and_start_X(Zab,reference_Zab))
 
     # Y-direction-scanning
     def start_continuous_movement_y(self):
@@ -214,6 +228,14 @@ class Scan_functions:
         self.main_window.Pixel_Interval.start()
         self.main_window.Adquisit_Timer.start()
         
+    # Y-direction-scanning
+    #Initial_Move
+    def check_position_and_start(self, Zab, reference_Zab):
+        if abs(self.get_current_position(Zab) - reference_Zab) < 10:
+            self.start_continuous_movement_y()
+        else:
+            QTimer.singleShot(500, self.main_window.check_position_and_start(Zab,reference_Zab))
+
         #Color pixel adjustment
     def interpolation_Color(self, oldcolor):
         """Adjusts the displayed color of flow velocity profile display 
@@ -237,8 +259,7 @@ class Scan_functions:
         max_y = 0
         newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
         return newcolor
-    
-    
+
 
 
 def Set_Scanning_Tab(self, scan_functionality):
@@ -260,35 +281,6 @@ def Set_Scanning_Tab(self, scan_functionality):
     self.PSD_Avg_Moment=0
 
    
-
-    ###################################################################
-    ###################################################################
-
-
-    # Y-direction-scanning
-    #Initial_Move
-    def check_position_and_start(Zab, reference_Zab):
-        if abs(scan_functionality.get_current_position(Zab) - reference_Zab) < 10:
-            scan_functionality.start_continuous_movement_y()
-        else:
-            QTimer.singleShot(500, check_position_and_start(Zab,reference_Zab))
-
-    # # X-direction-scanning
-    # #Initial_Move
-    def check_position_and_start_X(Zab, reference_Zab):
-        """Starts continuous movement along X if Zaber is in reference position
-        Otherwise, give command to move to reference position.
-        Args:
-            Zab (_type_): _description_
-            reference_Zab (_type_): _description_
-        """
-        if abs(scan_functionality.get_current_position(Zab) - reference_Zab) < 10:
-            scan_functionality.start_continuous_movement_x()
-        else:
-            QTimer.singleShot(500, check_position_and_start_X(Zab,reference_Zab))
-
-    ###################################################################
-    ###################################################################
     # Y-direction-scanning
     #General_Logic
     def Scan_Continuos_Y():
@@ -319,7 +311,7 @@ def Set_Scanning_Tab(self, scan_functionality):
         # Move first to (X1,Y1)
         scan_functionality.move_to_position(2,self.Pos_X1_Scan)
         scan_functionality.move_to_position(0,self.Pos_Y1_Scan)
-        check_position_and_start(0,self.Pos_Y1_Scan)
+        scan_functionality.check_position_and_start(0,self.Pos_Y1_Scan)
     
     # Y-direction-scanning
     #General_Logic
@@ -359,7 +351,7 @@ def Set_Scanning_Tab(self, scan_functionality):
         # Move first to (X1,Y1)
         scan_functionality.move_to_position(0,self.Pos_Y1_Scan)
         scan_functionality.move_to_position(2,self.Pos_X1_Scan)
-        check_position_and_start_X(2,self.Pos_X1_Scan)
+        scan_functionality.check_position_and_start_X(2,self.Pos_X1_Scan)
 
     ###################################################################
     ###################################################################
@@ -386,7 +378,7 @@ def Set_Scanning_Tab(self, scan_functionality):
             else:
                 scan_functionality.move_to_position(2,new_x_pos)
                 scan_functionality.move_to_position(0,self.Pos_Y1_Scan)
-                check_position_and_start(0,self.Pos_Y1_Scan)
+                scan_functionality.check_position_and_start(0,self.Pos_Y1_Scan)
         else:
             #AVG FFT
             self.dataAmp_Avg=(self.Freq_Data.mean(axis=1))
@@ -450,7 +442,7 @@ def Set_Scanning_Tab(self, scan_functionality):
             else:
                 scan_functionality.move_to_position(0,new_x_pos)
                 scan_functionality.move_to_position(2,self.Pos_X1_Scan)
-                check_position_and_start_X(2,self.Pos_X1_Scan)
+                scan_functionality.check_position_and_start_X(2,self.Pos_X1_Scan)
 
         # End of line not reached:
         else:
@@ -614,12 +606,12 @@ def Set_Scanning_Tab(self, scan_functionality):
             self.ui.load_pages.Vel_Limit_X1.setText(str(round(self.Zaber_Steps[inicio_grupo],1)))
 
             print("---------- Calibration finished ---------- ")
-    
-    
-    
+
+
+
     def Get_Report():
         plot_grouped_error_bars('Scanning_Moments_Dev.csv', int((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.cell_size))
-    
+
     ###################################################################
     ###################################################################
     self.Data_Spectrum_Array=pd.DataFrame()
@@ -645,7 +637,7 @@ def Set_Scanning_Tab(self, scan_functionality):
     self.Adquisit_Timer = QTimer()
     self.Adquisit_Timer.setInterval(10) # ISSUE here, works with 5 but unstable.
     self.Adquisit_Timer.timeout.connect(Capture_Data_Avg)
-    
+
     #For Calibration Routine
     # Configure timer that determines sampling frequency
     self.Vel_Routine= QTimer()
@@ -662,6 +654,4 @@ def Set_Scanning_Tab(self, scan_functionality):
     self.ui.load_pages.Vel_Report.clicked.connect(Get_Report)
     ###################################################################
     ###################################################################
-            
 
-   
