@@ -263,7 +263,6 @@ class Scan_functions:
         return newcolor
 
     def Scan_Continuos_X(self):
-
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
         if hasattr(self.main_window,'color_grid_widget'):
             self.reset_refresh_scan()
@@ -328,6 +327,113 @@ class Scan_functions:
         self.move_to_position(2,self.main_window.Pos_X1_Scan)
         self.move_to_position(0,self.main_window.Pos_Y1_Scan)
         self.check_position_and_start(0,self.main_window.Pos_Y1_Scan)
+
+    def Change_Pixel_DAQ_X(self):
+        #Stop condition:
+        #Reach end of a line
+        if self.main_window.counter_Data_per_Pixel >= (self.main_window.g_W):
+            self.main_window.counter_Data_per_Pixel=0
+            self.Stop_z2() # Stop the movement
+            actual_pos=(self.main_window.Pos_Y1_Scan+(((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.g_H)*self.main_window.counter_Step_Zaber_X))
+            #Save Avg spectrum for each row
+            self.main_window.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
+            self.main_window.Data_Spectrum_Array=pd.DataFrame()
+        
+            # Reset positions
+            self.main_window.counter_Step_Zaber_X+=1
+            new_x_pos=(self.main_window.Pos_Y1_Scan
+                        +(((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.g_H)
+                        *self.main_window.counter_Step_Zaber_X))
+            
+            if new_x_pos>=self.main_window.Pos_Y2_Scan: # Why is new x position compared with y position?
+                
+                # Stop DAQ if it is already running, causes crash otherwise
+                if hasattr (DAQ_Reader_Global.daq_instance, 'threadDAQ'): #CHECK THIS
+                    DAQ_Reader_Global.Stop_DAQ() # CHECK THIS
+                
+                self.main_window.Adquisit_Timer.stop()
+                self.main_window.color_grid_widget.exportar_Matrix_CSV()
+                self.main_window.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
+                print('------  Scan finished --------')
+                print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
+            else:
+                self.move_to_position(0,new_x_pos)
+                self.move_to_position(2,self.main_window.Pos_X1_Scan)
+                self.check_position_and_start_X(2,self.main_window.Pos_X1_Scan)
+
+        # End of line not reached:
+        else:
+            #Deviation estimation, vectorized by row by pixel
+            
+            factor_PSD = 2 / (self.main_window.number_of_samples * self.main_window.Laser_Frequency)
+            self.main_window.Pixel_by_Row = self.main_window.Freq_Data.pow(2).mul(factor_PSD)
+            M0_Pixel=self.main_window.Pixel_by_Row.sum(axis=0)
+            M0_Pixel = M0_Pixel.replace(0, 1)
+            M1_Pixel=self.main_window.Pixel_by_Row.mul(self.main_window.dataFreq, axis=0)
+            M1_Pixel=M1_Pixel.sum(axis=0)
+            M_dev=M1_Pixel/M0_Pixel
+            #Set N of data to average fix length
+            if self.main_window.Samples_To_AVG_Flag==True:
+                self.main_window.Samples_To_AVG=len(M1_Pixel)
+                self.main_window.Samples_To_AVG_Flag=False
+            M_dev = pd.Series(np.resize(M_dev.to_numpy(), self.main_window.Samples_To_AVG))
+            self.main_window.Moment_Dev=pd.concat([self.main_window.Moment_Dev, M_dev], axis=1)
+            
+            
+            self.main_window.dataAmp_Avg=(self.main_window.Freq_Data.mean(axis=1))
+            
+            #Save Avg Spectrum
+            self.main_window.Data_Spectrum_Array=pd.concat([self.main_window.Data_Spectrum_Array, self.main_window.dataAmp_Avg], axis=1)
+            print('N Avg Samples')
+            print(self.main_window.Counter_DAQ_samples)
+            
+            if self.main_window.dataAmp_Avg.empty:
+                self.main_window.dataAmp_Avg=self.main_window.dataFreq*0
+                self.main_window.Freq_Data=self.main_window.dataFreq*0
+
+            # Make PSD discrete, as original equation is time domain and
+            # contains integral to infinity:
+            self.main_window.PSD_Avg_Moment=(self.main_window.dataAmp_Avg*self.main_window.dataAmp_Avg)*(2/(self.main_window.number_of_samples*self.main_window.Laser_Frequency))
+            
+            # Solve M0: simple sum of PSD.
+            #self.PSD_Avg_Moment = self.PSD_Avg_Moment[:n // 2]
+            M0 = np.sum(self.main_window.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
+            
+            # Solve division by 0.
+            if M0==0:
+                M0=1
+     
+            # Solve M1: multiplication of the frequency and the PSD.
+            M1 = np.sum(self.main_window.dataFreq * self.main_window.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
+            print('AVG Moment')
+            print(M1/M0)
+
+            # Save calculated moment to variable for flow velocity profile view.
+            colorcolor=int(M1/M0)
+
+            # Reset count data average and vector.
+            self.main_window.Counter_DAQ_samples=0
+            self.main_window.Freq_Data=pd.DataFrame()
+
+            # Determine color given to flow velocity profile pixel.
+            # Format is [R,G,B] so the pixel will be varying intensity of green.
+            # colorcolor => integer value of average momentum.
+            self.main_window.New_Color=[0, self.interpolation_Color(colorcolor), 0]
+
+            # Apply new color to pixel in flow velocity profile view
+            # and save measured momentum to CSV file            
+            self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Data_per_Pixel,self.main_window.counter_Step_Zaber_X, self.main_window.New_Color)
+            self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
+           
+            # Add one to data taken for this pixel
+            self.main_window.counter_Data_per_Pixel+=1
+            
+            # Change current_column to next pixel (next column)
+            self.main_window.current_col= self.main_window.counter_Data_per_Pixel
+
+            # Why increment with one if the max width has been exceeded?
+            if self.main_window.counter_Data_per_Pixel >= self.main_window.g_W: 
+                self.main_window.counter_Data_per_Pixel += 1
 
 def Set_Scanning_Tab(self, scan_functionality):
     """Creates the scanning tab in the widget
@@ -400,115 +506,118 @@ def Set_Scanning_Tab(self, scan_functionality):
             if self.counter_Data_per_Pixel >= self.g_H:
                 self.counter_Data_per_Pixel += 1
 
+    
+
+
     # X-direction-scanning
     #Graphic_Data_Update
-    def Change_Pixel_DAQ_X():
+    # def Change_Pixel_DAQ_X():
         
-        #Stop condition:
-        #Reach end of a line
-        if self.counter_Data_per_Pixel >= (self.g_W):
-            self.counter_Data_per_Pixel=0
-            scan_functionality.Stop_z2() # Stop the movement
-            actual_pos=(self.Pos_Y1_Scan+(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)*self.counter_Step_Zaber_X))
-            #Save Avg spectrum for each row
-            self.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
-            self.Data_Spectrum_Array=pd.DataFrame()
+    #     #Stop condition:
+    #     #Reach end of a line
+    #     if self.counter_Data_per_Pixel >= (self.g_W):
+    #         self.counter_Data_per_Pixel=0
+    #         scan_functionality.Stop_z2() # Stop the movement
+    #         actual_pos=(self.Pos_Y1_Scan+(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)*self.counter_Step_Zaber_X))
+    #         #Save Avg spectrum for each row
+    #         self.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
+    #         self.Data_Spectrum_Array=pd.DataFrame()
         
-            # Reset positions
-            self.counter_Step_Zaber_X+=1
-            new_x_pos=(self.Pos_Y1_Scan
-                        +(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)
-                        *self.counter_Step_Zaber_X))
+    #         # Reset positions
+    #         self.counter_Step_Zaber_X+=1
+    #         new_x_pos=(self.Pos_Y1_Scan
+    #                     +(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)
+    #                     *self.counter_Step_Zaber_X))
             
-            if new_x_pos>=self.Pos_Y2_Scan: # Why is new x position compared with y position?
+    #         if new_x_pos>=self.Pos_Y2_Scan: # Why is new x position compared with y position?
                 
-                # Stop DAQ if it is already running, causes crash otherwise
-                if hasattr (DAQ_Reader_Global.daq_instance, 'threadDAQ'):
-                    DAQ_Reader_Global.Stop_DAQ()
+    #             # Stop DAQ if it is already running, causes crash otherwise
+    #             if hasattr (DAQ_Reader_Global.daq_instance, 'threadDAQ'):
+    #                 DAQ_Reader_Global.Stop_DAQ()
                 
-                self.Adquisit_Timer.stop()
-                self.color_grid_widget.exportar_Matrix_CSV()
-                self.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
-                print('------  Scan finished --------')
-                print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
-            else:
-                scan_functionality.move_to_position(0,new_x_pos)
-                scan_functionality.move_to_position(2,self.Pos_X1_Scan)
-                scan_functionality.check_position_and_start_X(2,self.Pos_X1_Scan)
+    #             self.Adquisit_Timer.stop()
+    #             self.color_grid_widget.exportar_Matrix_CSV()
+    #             self.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
+    #             print('------  Scan finished --------')
+    #             print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
+    #         else:
+    #             scan_functionality.move_to_position(0,new_x_pos)
+    #             scan_functionality.move_to_position(2,self.Pos_X1_Scan)
+    #             scan_functionality.check_position_and_start_X(2,self.Pos_X1_Scan)
 
-        # End of line not reached:
-        else:
-            #Deviation estimation, vectorized by row by pixel
+    #     # End of line not reached:
+    #     else:
+    #         #Deviation estimation, vectorized by row by pixel
             
-            factor_PSD = 2 / (self.number_of_samples * self.Laser_Frequency)
-            self.Pixel_by_Row = self.Freq_Data.pow(2).mul(factor_PSD)
-            M0_Pixel=self.Pixel_by_Row.sum(axis=0)
-            M0_Pixel = M0_Pixel.replace(0, 1)
-            M1_Pixel=self.Pixel_by_Row.mul(self.dataFreq, axis=0)
-            M1_Pixel=M1_Pixel.sum(axis=0)
-            M_dev=M1_Pixel/M0_Pixel
-            #Set N of data to average fix length
-            if self.Samples_To_AVG_Flag==True:
-                self.Samples_To_AVG=len(M1_Pixel)
-                self.Samples_To_AVG_Flag=False
-            M_dev = pd.Series(np.resize(M_dev.to_numpy(), self.Samples_To_AVG))
-            self.Moment_Dev=pd.concat([self.Moment_Dev, M_dev], axis=1)
+    #         factor_PSD = 2 / (self.number_of_samples * self.Laser_Frequency)
+    #         self.Pixel_by_Row = self.Freq_Data.pow(2).mul(factor_PSD)
+    #         M0_Pixel=self.Pixel_by_Row.sum(axis=0)
+    #         M0_Pixel = M0_Pixel.replace(0, 1)
+    #         M1_Pixel=self.Pixel_by_Row.mul(self.dataFreq, axis=0)
+    #         M1_Pixel=M1_Pixel.sum(axis=0)
+    #         M_dev=M1_Pixel/M0_Pixel
+    #         #Set N of data to average fix length
+    #         if self.Samples_To_AVG_Flag==True:
+    #             self.Samples_To_AVG=len(M1_Pixel)
+    #             self.Samples_To_AVG_Flag=False
+    #         M_dev = pd.Series(np.resize(M_dev.to_numpy(), self.Samples_To_AVG))
+    #         self.Moment_Dev=pd.concat([self.Moment_Dev, M_dev], axis=1)
             
             
-            self.dataAmp_Avg=(self.Freq_Data.mean(axis=1))
+    #         self.dataAmp_Avg=(self.Freq_Data.mean(axis=1))
             
-            #Save Avg Spectrum
-            self.Data_Spectrum_Array=pd.concat([self.Data_Spectrum_Array, self.dataAmp_Avg], axis=1)
-            print('N Avg Samples')
-            print(self.Counter_DAQ_samples)
+    #         #Save Avg Spectrum
+    #         self.Data_Spectrum_Array=pd.concat([self.Data_Spectrum_Array, self.dataAmp_Avg], axis=1)
+    #         print('N Avg Samples')
+    #         print(self.Counter_DAQ_samples)
             
-            if self.dataAmp_Avg.empty:
-                self.dataAmp_Avg=self.dataFreq*0
-                self.Freq_Data=self.dataFreq*0
+    #         if self.dataAmp_Avg.empty:
+    #             self.dataAmp_Avg=self.dataFreq*0
+    #             self.Freq_Data=self.dataFreq*0
 
-            # Make PSD discrete, as original equation is time domain and
-            # contains integral to infinity:
-            self.PSD_Avg_Moment=(self.dataAmp_Avg*self.dataAmp_Avg)*(2/(self.number_of_samples*self.Laser_Frequency))
+    #         # Make PSD discrete, as original equation is time domain and
+    #         # contains integral to infinity:
+    #         self.PSD_Avg_Moment=(self.dataAmp_Avg*self.dataAmp_Avg)*(2/(self.number_of_samples*self.Laser_Frequency))
             
-            # Solve M0: simple sum of PSD.
-            #self.PSD_Avg_Moment = self.PSD_Avg_Moment[:n // 2]
-            M0 = np.sum(self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
+    #         # Solve M0: simple sum of PSD.
+    #         #self.PSD_Avg_Moment = self.PSD_Avg_Moment[:n // 2]
+    #         M0 = np.sum(self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
             
-            # Solve division by 0.
-            if M0==0:
-                M0=1
+    #         # Solve division by 0.
+    #         if M0==0:
+    #             M0=1
      
-            # Solve M1: multiplication of the frequency and the PSD.
-            M1 = np.sum(self.dataFreq * self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
-            print('AVG Moment')
-            print(M1/M0)
+    #         # Solve M1: multiplication of the frequency and the PSD.
+    #         M1 = np.sum(self.dataFreq * self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
+    #         print('AVG Moment')
+    #         print(M1/M0)
 
-            # Save calculated moment to variable for flow velocity profile view.
-            colorcolor=int(M1/M0)
+    #         # Save calculated moment to variable for flow velocity profile view.
+    #         colorcolor=int(M1/M0)
 
-            # Reset count data average and vector.
-            self.Counter_DAQ_samples=0
-            self.Freq_Data=pd.DataFrame()
+    #         # Reset count data average and vector.
+    #         self.Counter_DAQ_samples=0
+    #         self.Freq_Data=pd.DataFrame()
 
-            # Determine color given to flow velocity profile pixel.
-            # Format is [R,G,B] so the pixel will be varying intensity of green.
-            # colorcolor => integer value of average momentum.
-            self.New_Color=[0, scan_functionality.interpolation_Color(colorcolor), 0]
+    #         # Determine color given to flow velocity profile pixel.
+    #         # Format is [R,G,B] so the pixel will be varying intensity of green.
+    #         # colorcolor => integer value of average momentum.
+    #         self.New_Color=[0, scan_functionality.interpolation_Color(colorcolor), 0]
 
-            # Apply new color to pixel in flow velocity profile view
-            # and save measured momentum to CSV file            
-            self.color_grid_widget.changeCellColor(self.counter_Data_per_Pixel,self.counter_Step_Zaber_X, self.New_Color)
-            self.color_grid_widget.updateCSV(self.counter_Step_Zaber_X-1,self.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
+    #         # Apply new color to pixel in flow velocity profile view
+    #         # and save measured momentum to CSV file            
+    #         self.color_grid_widget.changeCellColor(self.counter_Data_per_Pixel,self.counter_Step_Zaber_X, self.New_Color)
+    #         self.color_grid_widget.updateCSV(self.counter_Step_Zaber_X-1,self.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
            
-            # Add one to data taken for this pixel
-            self.counter_Data_per_Pixel+=1
+    #         # Add one to data taken for this pixel
+    #         self.counter_Data_per_Pixel+=1
             
-            # Change current_column to next pixel (next column)
-            self.current_col= self.counter_Data_per_Pixel
+    #         # Change current_column to next pixel (next column)
+    #         self.current_col= self.counter_Data_per_Pixel
 
-            # Why increment with one if the max width has been exceeded?
-            if self.counter_Data_per_Pixel >= self.g_W: 
-                self.counter_Data_per_Pixel += 1
+    #         # Why increment with one if the max width has been exceeded?
+    #         if self.counter_Data_per_Pixel >= self.g_W: 
+    #             self.counter_Data_per_Pixel += 1
 
 
     def Capture_Data_Avg():
@@ -610,7 +719,7 @@ def Set_Scanning_Tab(self, scan_functionality):
     
     #Buttons and timmer connections #########################
     self.Pixel_Interval_X = QTimer()
-    self.Pixel_Interval_X.timeout.connect(Change_Pixel_DAQ_X)
+    self.Pixel_Interval_X.timeout.connect(scan_functionality.Change_Pixel_DAQ_X)
 
     self.Pixel_Interval = QTimer()
     self.Pixel_Interval.timeout.connect(Change_Pixel_DAQ)
