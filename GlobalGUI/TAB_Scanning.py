@@ -110,26 +110,28 @@ class Scan_functions:
         self.main_window = main_window
         
         # #Init
-        self.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
-        self.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
-        self.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()) * 1000 * 1.6381 / 1.9843
-        self.time_timer_scan=0
-        self.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text()) 
+        # self.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
+        # self.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
+        # self.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()) * 1000 * 1.6381 / 1.9843
+        # self.time_timer_scan=0
+        # self.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text()) 
         
-        self.counter_Data_per_Pixel=0 # Used for keeping track of current pixel
-        self.current_col=0
-        self.current_row=0
-        self.New_Color= [255,255,255]
-        self.scanning_Finish=False
-        #Counter for the N. of average samples: 
-        self.Counter_DAQ_samples=0
-        self.PSD_Avg_Moment=0
+        # self.counter_Data_per_Pixel=0 # Used for keeping track of current pixel
+        # self.current_col=0
+        # self.current_row=0
+        # self.New_Color= [255,255,255]
+        # self.scanning_Finish=False
+        # #Counter for the N. of average samples: 
+        # self.Counter_DAQ_samples=0
+        # self.PSD_Avg_Moment=0
 
         # Button connections
         self.main_window.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(self.reset_refresh_scan)
         self.main_window.ui.load_pages.Stop_Y_but.clicked.connect(self.Stop_z1)
         self.main_window.ui.load_pages.Stop_x_but.clicked.connect(self.Stop_z2) # Button for stopping X
-        
+        self.main_window.ui.load_pages.continuous_scanX_but.clicked.connect(self.Scan_Continuos_X)
+        self.main_window.ui.load_pages.continuous_scanY_but.clicked.connect(self.Scan_Continuos_Y)
+
     def reset_refresh_scan(self):
         '''Resets the grid for a new scan. Without this, a second grid will appear.
         
@@ -218,8 +220,8 @@ class Scan_functions:
         """
         self.main_window.distance = abs(self.main_window.Pos_Y2_Scan - self.main_window.Pos_Y1_Scan)
         self.main_window.time_to_travel = (self.main_window.distance / float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
-        self.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
-        self.time_timer_scan=((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
+        self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
+        self.main_window.time_timer_scan=((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
 
         with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
             connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int(self.main_window.speed))
@@ -260,7 +262,72 @@ class Scan_functions:
         newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
         return newcolor
 
+    def Scan_Continuos_X(self):
 
+        # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
+        if hasattr(self.main_window,'color_grid_widget'):
+            self.reset_refresh_scan()
+        
+        #Update GUI Information
+        self.main_window.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())# / ((1.6381 / 1.9843))
+        self.main_window.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
+        self.main_window.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
+        self.main_window.Pos_X1_Scan = float(self.main_window.ui.load_pages.lineEdit_x1_scan.text())
+        self.main_window.Pos_X2_Scan = float(self.main_window.ui.load_pages.lineEdit_x2_scan.text())
+        self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
+        
+        #Update everything
+        self.main_window.g_W=int((self.main_window.Pos_X2_Scan-self.main_window.Pos_X1_Scan)/self.main_window.cell_size)
+        self.main_window.g_H=int((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.cell_size)
+        
+        #Create Graph
+        self.main_window.color_grid_widget = ColorGrid(self.main_window.g_H,self.main_window.g_W,self.main_window.cell_size)
+        self.main_window.ui.load_pages.Layout_table_Scan.addWidget(self.main_window.color_grid_widget)
+        
+        # Variables_Initialization
+        self.main_window.counter_Data_per_Pixel=0
+        self.main_window.counter_Step_Zaber_X=0
+        self.main_window.current_col=0
+        self.main_window.current_row=0
+        self.main_window.New_Color= [255,255,255]
+
+        # Average dev flow rate
+        self.main_window.Moment_Dev=pd.DataFrame()
+        self.main_window.Samples_to_AVG=0
+        self.main_window.Samples_To_AVG_Flag=True
+        # Move first to (X1,Y1)
+        self.move_to_position(0,self.main_window.Pos_Y1_Scan)
+        self.move_to_position(2,self.main_window.Pos_X1_Scan)
+        self.check_position_and_start_X(2,self.main_window.Pos_X1_Scan)
+
+    def Scan_Continuos_Y(self):
+        # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
+        if hasattr(self,'color_grid_widget'):
+            self.reset_refresh_scan()
+            
+        #Update GUI Information
+        self.main_window.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()) / ((1.6381 / 1.9843))
+        self.main_window.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
+        self.main_window.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
+        self.main_window.Pos_X1_Scan = float(self.main_window.ui.load_pages.lineEdit_x1_scan.text())
+        self.main_window.Pos_X2_Scan = float(self.main_window.ui.load_pages.lineEdit_x2_scan.text())
+        self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
+        #Update everything
+        self.main_window.g_W=int((self.main_window.Pos_X2_Scan-self.main_window.Pos_X1_Scan)/self.main_window.cell_size)
+        self.main_window.g_H=int((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.cell_size)
+        #Create Graph
+        self.main_window.color_grid_widget = ColorGrid(self.main_window.g_H,self.main_window.g_W,self.main_window.cell_size)
+        self.main_window.ui.load_pages.Layout_table_Scan.addWidget(self.main_window.color_grid_widget)
+        # Variables_Initialization
+        self.main_window.counter_Data_per_Pixel=0 # used for determining current pixel
+        self.main_window.counter_Step_Zaber_X=0
+        self.main_window.current_col=0
+        self.main_window.current_row=0
+        self.main_window.New_Color= [255,255,255] # [R,G,B] => WHITE
+        # Move first to (X1,Y1)
+        self.move_to_position(2,self.main_window.Pos_X1_Scan)
+        self.move_to_position(0,self.main_window.Pos_Y1_Scan)
+        self.check_position_and_start(0,self.main_window.Pos_Y1_Scan)
 
 def Set_Scanning_Tab(self, scan_functionality):
     """Creates the scanning tab in the widget
@@ -280,89 +347,14 @@ def Set_Scanning_Tab(self, scan_functionality):
     self.Counter_DAQ_samples=0
     self.PSD_Avg_Moment=0
 
-   
-    # Y-direction-scanning
-    #General_Logic
-    def Scan_Continuos_Y():
-        
-        # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
-        if hasattr(self,'color_grid_widget'):
-            scan_functionality.reset_refresh_scan()
-            
-        #Update GUI Information
-        self.speed = float(self.ui.load_pages.lineEdit_speed_ums.text()) / ((1.6381 / 1.9843))
-        self.Pos_Y1_Scan = float(self.ui.load_pages.lineEdit_y1_scan.text())
-        self.Pos_Y2_Scan = float(self.ui.load_pages.lineEdit_y2_scan.text())
-        self.Pos_X1_Scan = float(self.ui.load_pages.lineEdit_x1_scan.text())
-        self.Pos_X2_Scan = float(self.ui.load_pages.lineEdit_x2_scan.text())
-        self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text())
-        #Update everything
-        self.g_W=int((self.Pos_X2_Scan-self.Pos_X1_Scan)/self.cell_size)
-        self.g_H=int((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.cell_size)
-        #Create Graph
-        self.color_grid_widget = ColorGrid(self.g_H,self.g_W,self.cell_size)
-        self.ui.load_pages.Layout_table_Scan.addWidget(self.color_grid_widget)
-        # Variables_Initialization
-        self.counter_Data_per_Pixel=0 # used for determining current pixel
-        self.counter_Step_Zaber_X=0
-        self.current_col=0
-        self.current_row=0
-        self.New_Color= [255,255,255] # [R,G,B] => WHITE
-        # Move first to (X1,Y1)
-        scan_functionality.move_to_position(2,self.Pos_X1_Scan)
-        scan_functionality.move_to_position(0,self.Pos_Y1_Scan)
-        scan_functionality.check_position_and_start(0,self.Pos_Y1_Scan)
-    
-    # Y-direction-scanning
-    #General_Logic
-    def Scan_Continuos_X():
 
-        # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
-        if hasattr(self,'color_grid_widget'):
-            scan_functionality.reset_refresh_scan()
-        
-        #Update GUI Information
-        self.speed = float(self.ui.load_pages.lineEdit_speed_ums.text())# / ((1.6381 / 1.9843))
-        self.Pos_Y1_Scan = float(self.ui.load_pages.lineEdit_y1_scan.text())
-        self.Pos_Y2_Scan = float(self.ui.load_pages.lineEdit_y2_scan.text())
-        self.Pos_X1_Scan = float(self.ui.load_pages.lineEdit_x1_scan.text())
-        self.Pos_X2_Scan = float(self.ui.load_pages.lineEdit_x2_scan.text())
-        self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text())
-        
-        #Update everything
-        self.g_W=int((self.Pos_X2_Scan-self.Pos_X1_Scan)/self.cell_size)
-        self.g_H=int((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.cell_size)
-        
-        #Create Graph
-        self.color_grid_widget = ColorGrid(self.g_H,self.g_W,self.cell_size)
-        self.ui.load_pages.Layout_table_Scan.addWidget(self.color_grid_widget)
-        
-        # Variables_Initialization
-        self.counter_Data_per_Pixel=0
-        self.counter_Step_Zaber_X=0
-        self.current_col=0
-        self.current_row=0
-        self.New_Color= [255,255,255]
-
-        # Average dev flow rate
-        self.Moment_Dev=pd.DataFrame()
-        self.Samples_to_AVG=0
-        self.Samples_To_AVG_Flag=True
-        # Move first to (X1,Y1)
-        scan_functionality.move_to_position(0,self.Pos_Y1_Scan)
-        scan_functionality.move_to_position(2,self.Pos_X1_Scan)
-        scan_functionality.check_position_and_start_X(2,self.Pos_X1_Scan)
-
-    ###################################################################
-    ###################################################################
-    # Y-direction-scanning
     #Graphic_Data_Update
     def Change_Pixel_DAQ():
         #Stop condition
         #The final Y position is reach
         if self.counter_Data_per_Pixel >= (self.g_H):
             self.counter_Data_per_Pixel=0
-            Scan_functions.Stop_z1(self) #Stop the movement
+            scan_functionality.Stop_z1() #Stop the movement
             #Reset the position
             self.counter_Step_Zaber_X+=1
             #Move to te next X position
@@ -646,8 +638,8 @@ def Set_Scanning_Tab(self, scan_functionality):
 
     # Link buttons to functions #
     self.ui.load_pages.Stop_x_but.clicked.connect(scan_functionality.get_current_position)
-    self.ui.load_pages.continuous_scanY_but.clicked.connect(Scan_Continuos_Y)
-    self.ui.load_pages.continuous_scanX_but.clicked.connect(Scan_Continuos_X)
+
+
     # self.ui.load_pages.Stop_Y_but.clicked.connect(Stop_z1)
     # self.ui.load_pages.Stop_x_but.clicked.connect(Stop_z2) # Button for stopping X
     self.ui.load_pages.Vel_Start_Calib.clicked.connect(Start_Vel_Calib)
