@@ -109,28 +109,13 @@ class Scan_functions:
     def __init__(self, main_window):
         self.main_window = main_window
         
-        # #Init
-        # self.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
-        # self.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
-        # self.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()) * 1000 * 1.6381 / 1.9843
-        # self.time_timer_scan=0
-        # self.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text()) 
-        
-        # self.counter_Data_per_Pixel=0 # Used for keeping track of current pixel
-        # self.current_col=0
-        # self.current_row=0
-        # self.New_Color= [255,255,255]
-        # self.scanning_Finish=False
-        # #Counter for the N. of average samples: 
-        # self.Counter_DAQ_samples=0
-        # self.PSD_Avg_Moment=0
-
         # Button connections
         self.main_window.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(self.reset_refresh_scan)
         self.main_window.ui.load_pages.Stop_Y_but.clicked.connect(self.Stop_z1)
         self.main_window.ui.load_pages.Stop_x_but.clicked.connect(self.Stop_z2) # Button for stopping X
         self.main_window.ui.load_pages.continuous_scanX_but.clicked.connect(self.Scan_Continuos_X)
         self.main_window.ui.load_pages.continuous_scanY_but.clicked.connect(self.Scan_Continuos_Y)
+
 
     def reset_refresh_scan(self):
         '''Resets the grid for a new scan. Without this, a second grid will appear.
@@ -402,7 +387,7 @@ class Scan_functions:
             # Solve division by 0.
             if M0==0:
                 M0=1
-     
+    
             # Solve M1: multiplication of the frequency and the PSD.
             M1 = np.sum(self.main_window.dataFreq * self.main_window.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
             print('AVG Moment')
@@ -424,7 +409,7 @@ class Scan_functions:
             # and save measured momentum to CSV file            
             self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Data_per_Pixel,self.main_window.counter_Step_Zaber_X, self.main_window.New_Color)
             self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
-           
+        
             # Add one to data taken for this pixel
             self.main_window.counter_Data_per_Pixel+=1
             
@@ -435,8 +420,10 @@ class Scan_functions:
             if self.main_window.counter_Data_per_Pixel >= self.main_window.g_W: 
                 self.main_window.counter_Data_per_Pixel += 1
 
+
 def Set_Scanning_Tab(self, scan_functionality):
     """Creates the scanning tab in the widget
+    WARNING: the Scan_functions class is dependent on this function
     """
     #Initialization
     self.Pos_Y1_Scan = float(self.ui.load_pages.lineEdit_y1_scan.text())
@@ -456,6 +443,13 @@ def Set_Scanning_Tab(self, scan_functionality):
 
     #Graphic_Data_Update
     def Change_Pixel_DAQ():
+        """Changes the pixels in Y direction
+        NOTE: this function is critical to the interface, when you remove it stops working entirely,
+        even the X direction measurements.
+        
+        It contains some functions and initializes the variables required for scanning functionality
+        and Scan_functions class.
+        """
         #Stop condition
         #The final Y position is reach
         if self.counter_Data_per_Pixel >= (self.g_H):
@@ -506,130 +500,20 @@ def Set_Scanning_Tab(self, scan_functionality):
             if self.counter_Data_per_Pixel >= self.g_H:
                 self.counter_Data_per_Pixel += 1
 
-    
-
-
-    # X-direction-scanning
-    #Graphic_Data_Update
-    # def Change_Pixel_DAQ_X():
-        
-    #     #Stop condition:
-    #     #Reach end of a line
-    #     if self.counter_Data_per_Pixel >= (self.g_W):
-    #         self.counter_Data_per_Pixel=0
-    #         scan_functionality.Stop_z2() # Stop the movement
-    #         actual_pos=(self.Pos_Y1_Scan+(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)*self.counter_Step_Zaber_X))
-    #         #Save Avg spectrum for each row
-    #         self.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
-    #         self.Data_Spectrum_Array=pd.DataFrame()
-        
-    #         # Reset positions
-    #         self.counter_Step_Zaber_X+=1
-    #         new_x_pos=(self.Pos_Y1_Scan
-    #                     +(((self.Pos_Y2_Scan-self.Pos_Y1_Scan)/self.g_H)
-    #                     *self.counter_Step_Zaber_X))
-            
-    #         if new_x_pos>=self.Pos_Y2_Scan: # Why is new x position compared with y position?
-                
-    #             # Stop DAQ if it is already running, causes crash otherwise
-    #             if hasattr (DAQ_Reader_Global.daq_instance, 'threadDAQ'):
-    #                 DAQ_Reader_Global.Stop_DAQ()
-                
-    #             self.Adquisit_Timer.stop()
-    #             self.color_grid_widget.exportar_Matrix_CSV()
-    #             self.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
-    #             print('------  Scan finished --------')
-    #             print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
-    #         else:
-    #             scan_functionality.move_to_position(0,new_x_pos)
-    #             scan_functionality.move_to_position(2,self.Pos_X1_Scan)
-    #             scan_functionality.check_position_and_start_X(2,self.Pos_X1_Scan)
-
-    #     # End of line not reached:
-    #     else:
-    #         #Deviation estimation, vectorized by row by pixel
-            
-    #         factor_PSD = 2 / (self.number_of_samples * self.Laser_Frequency)
-    #         self.Pixel_by_Row = self.Freq_Data.pow(2).mul(factor_PSD)
-    #         M0_Pixel=self.Pixel_by_Row.sum(axis=0)
-    #         M0_Pixel = M0_Pixel.replace(0, 1)
-    #         M1_Pixel=self.Pixel_by_Row.mul(self.dataFreq, axis=0)
-    #         M1_Pixel=M1_Pixel.sum(axis=0)
-    #         M_dev=M1_Pixel/M0_Pixel
-    #         #Set N of data to average fix length
-    #         if self.Samples_To_AVG_Flag==True:
-    #             self.Samples_To_AVG=len(M1_Pixel)
-    #             self.Samples_To_AVG_Flag=False
-    #         M_dev = pd.Series(np.resize(M_dev.to_numpy(), self.Samples_To_AVG))
-    #         self.Moment_Dev=pd.concat([self.Moment_Dev, M_dev], axis=1)
-            
-            
-    #         self.dataAmp_Avg=(self.Freq_Data.mean(axis=1))
-            
-    #         #Save Avg Spectrum
-    #         self.Data_Spectrum_Array=pd.concat([self.Data_Spectrum_Array, self.dataAmp_Avg], axis=1)
-    #         print('N Avg Samples')
-    #         print(self.Counter_DAQ_samples)
-            
-    #         if self.dataAmp_Avg.empty:
-    #             self.dataAmp_Avg=self.dataFreq*0
-    #             self.Freq_Data=self.dataFreq*0
-
-    #         # Make PSD discrete, as original equation is time domain and
-    #         # contains integral to infinity:
-    #         self.PSD_Avg_Moment=(self.dataAmp_Avg*self.dataAmp_Avg)*(2/(self.number_of_samples*self.Laser_Frequency))
-            
-    #         # Solve M0: simple sum of PSD.
-    #         #self.PSD_Avg_Moment = self.PSD_Avg_Moment[:n // 2]
-    #         M0 = np.sum(self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
-            
-    #         # Solve division by 0.
-    #         if M0==0:
-    #             M0=1
-     
-    #         # Solve M1: multiplication of the frequency and the PSD.
-    #         M1 = np.sum(self.dataFreq * self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
-    #         print('AVG Moment')
-    #         print(M1/M0)
-
-    #         # Save calculated moment to variable for flow velocity profile view.
-    #         colorcolor=int(M1/M0)
-
-    #         # Reset count data average and vector.
-    #         self.Counter_DAQ_samples=0
-    #         self.Freq_Data=pd.DataFrame()
-
-    #         # Determine color given to flow velocity profile pixel.
-    #         # Format is [R,G,B] so the pixel will be varying intensity of green.
-    #         # colorcolor => integer value of average momentum.
-    #         self.New_Color=[0, scan_functionality.interpolation_Color(colorcolor), 0]
-
-    #         # Apply new color to pixel in flow velocity profile view
-    #         # and save measured momentum to CSV file            
-    #         self.color_grid_widget.changeCellColor(self.counter_Data_per_Pixel,self.counter_Step_Zaber_X, self.New_Color)
-    #         self.color_grid_widget.updateCSV(self.counter_Step_Zaber_X-1,self.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
-           
-    #         # Add one to data taken for this pixel
-    #         self.counter_Data_per_Pixel+=1
-            
-    #         # Change current_column to next pixel (next column)
-    #         self.current_col= self.counter_Data_per_Pixel
-
-    #         # Why increment with one if the max width has been exceeded?
-    #         if self.counter_Data_per_Pixel >= self.g_W: 
-    #             self.counter_Data_per_Pixel += 1
-
 
     def Capture_Data_Avg():
         
+        try:
         ######### Update Laser data FFT and Voltage
-        self.DAQ_Data=self.threadDAQ.DAQ_Data
-        self.data_DAQ2=butter_bandpass_filter(self.DAQ_Data, self.low_freq_filter, self.high_freq_filter,self.order_filter, self.Laser_Frequency)
-        self.dataAmp, self.dataFreq, _=FFT_calc(self.data_DAQ2, self.Laser_Frequency)
-        amp=pd.Series((self.dataAmp))
-        #Add a new column
-        self.Freq_Data=pd.concat([self.Freq_Data, amp], axis=1)
-        self.Counter_DAQ_samples=self.Counter_DAQ_samples+1
+            self.DAQ_Data=self.threadDAQ.DAQ_Data
+            self.data_DAQ2=butter_bandpass_filter(self.DAQ_Data, self.low_freq_filter, self.high_freq_filter,self.order_filter, self.Laser_Frequency)
+            self.dataAmp, self.dataFreq, _=FFT_calc(self.data_DAQ2, self.Laser_Frequency)
+            amp=pd.Series((self.dataAmp))
+            #Add a new column
+            self.Freq_Data=pd.concat([self.Freq_Data, amp], axis=1)
+            self.Counter_DAQ_samples=self.Counter_DAQ_samples+1
+        except:
+            print("error in Capture_Data_Avg")
 
     ###################################################################
     ###################################################################
@@ -717,10 +601,9 @@ def Set_Scanning_Tab(self, scan_functionality):
     ###################################################################
     self.Data_Spectrum_Array=pd.DataFrame()
     
-    #Buttons and timmer connections #########################
+    # #Buttons and timmer connections #########################
     self.Pixel_Interval_X = QTimer()
     self.Pixel_Interval_X.timeout.connect(scan_functionality.Change_Pixel_DAQ_X)
-
     self.Pixel_Interval = QTimer()
     self.Pixel_Interval.timeout.connect(Change_Pixel_DAQ)
 
