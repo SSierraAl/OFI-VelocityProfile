@@ -67,7 +67,8 @@ def Set_DAQ_Functions(self):
     
     #Update DAQ Parameters in TAB Calib
     self.ui.load_pages.continuous_scanX_but.clicked.connect(Init_DAQ_Connection)
-    self.ui.load_pages.continuous_scanY_but.clicked.connect(Init_DAQ_Connection)
+    #self.ui.load_pages.continuous_scanY_but.clicked.connect(Init_DAQ_Connection)
+    self.ui.load_pages.find_reference_but.clicked.connect(Init_DAQ_Connection)
     self.ui.load_pages.Step_Step_but.clicked.connect(Init_DAQ_Connection)
     self.ui.load_pages.Vel_Start_Calib.clicked.connect(Init_DAQ_Connection)
     

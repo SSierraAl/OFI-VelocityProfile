@@ -116,8 +116,8 @@ class Scan_functions:
         self.main_window.ui.load_pages.continuous_scanX_but.clicked.connect(self.start_manual_scan)
         
         # changed for testing new scan area functions:
-        self.main_window.ui.load_pages.continuous_scanY_but.clicked.connect(self.determine_center_position)
-
+        #self.main_window.ui.load_pages.continuous_scanY_but.clicked.connect(self.determine_center_position)
+        self.main_window.ui.load_pages.find_reference_but.clicked.connect(self.determine_center_position)
         
     def reset_refresh_scan(self):
         '''Resets the grid for a new scan. Without this, a second grid will appear.
