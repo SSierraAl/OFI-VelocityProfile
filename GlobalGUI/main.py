@@ -29,6 +29,7 @@ from TAB_Home_Read import *
 from DAQ_Reader_Global import *
 from TAB_Scanning import *
 
+
 import pyqtgraph as pg
 import sys
 from PySide6.QtCore import QTimer
@@ -75,9 +76,8 @@ class MainWindow(QMainWindow):
 
         # SET SCANNING TAB
         # ///////////////////////////////////////////////////////////////
-        scan_functionality = Scan_functions(self)
-        Set_Scanning_Tab(self, scan_functionality)
-
+        self.scan_functions_instance = Scan_functions(self)
+        Set_Scanning_Tab(self, self.scan_functions_instance) #TODO: the scan_functions_instance of self can be used within the set_scanning_tab now, without having to pass it as an argument.
 
         # ///////////////////////////////////////////////////////////////
         # SHOW MAIN WINDOW

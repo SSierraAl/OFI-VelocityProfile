@@ -13,7 +13,7 @@ from zaber_motion import Units
 from zaber_motion.binary import Connection,CommandCode
 
 import DAQ_Reader_Global # Import for use of stop_daq() function
-
+import scan_area_module
     ###################################################################
     ###################################################################
     #Graphic Widget
@@ -113,10 +113,12 @@ class Scan_functions:
         self.main_window.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(self.reset_refresh_scan)
         self.main_window.ui.load_pages.Stop_Y_but.clicked.connect(self.Stop_z1)
         self.main_window.ui.load_pages.Stop_x_but.clicked.connect(self.Stop_z2) # Button for stopping X
-        self.main_window.ui.load_pages.continuous_scanX_but.clicked.connect(self.Scan_Continuos_X)
-        self.main_window.ui.load_pages.continuous_scanY_but.clicked.connect(self.Scan_Continuos_Y)
+        self.main_window.ui.load_pages.continuous_scanX_but.clicked.connect(self.start_manual_scan)
+        
+        # changed for testing new scan area functions:
+        self.main_window.ui.load_pages.continuous_scanY_but.clicked.connect(self.determine_center_position)
 
-
+        
     def reset_refresh_scan(self):
         '''Resets the grid for a new scan. Without this, a second grid will appear.
         
@@ -168,16 +170,48 @@ class Scan_functions:
         Calculates time it takes to travel along entire distance and stops
         the saber when this time, and thus distance, have passed.
         """
-        self.main_window.distance = abs(self.main_window.Pos_X2_Scan - self.main_window.Pos_X1_Scan)
-        self.main_window.time_to_travel = (self.main_window.distance / float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
-        self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text()) 
-        self.main_window.time_timer_scan=((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
+        print("INFO: starting continuous movement X")
+        # There should be some way to optimize this code with less lines, but it works at the moment. It is easiest to keep the override and manual things separate, to make sure there is
+        # no weird behaviour with other code.
+        
+        if self.main_window.override_user_settings is False:
+            print("INFO: using interface settings for continuous movement")
+            self.main_window.distance = abs(self.main_window.Pos_X2_Scan - self.main_window.Pos_X1_Scan)
+            self.main_window.time_to_travel = (self.main_window.distance / float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
+            self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text()) 
+            self.main_window.time_timer_scan=((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
+        else:
+            print("INFO: using algorithm override settings for continuous movement")
+            #self.main_window.speed = self.main_window.speed_override # optional way of doing it
+            
+            self.main_window.distance = abs(self.main_window.Pos_X2_Scan_override - self.main_window.Pos_X1_Scan_override)
+            self.main_window.time_to_travel = (self.main_window.distance / float(self.main_window.speed_override))*1000 # Milliseconds
+            #self.main_window.time_to_travel = (self.main_window.distance / float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
+            
+            self.main_window.cell_size = int(self.main_window.cell_size_override) 
+            self.main_window.time_timer_scan=((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
+       
+        
+        print(f"Speed settings: {self.main_window.speed} {float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())}, {self.main_window.speed_override}")
+        print("INFO Scan settings:")
+        print(f"{self.main_window.distance}, {self.main_window.time_to_travel}, {self.main_window.cell_size},{self.main_window.time_timer_scan}")
 
+        print("INFO: attempting Zaber move constant speed")
         try:
-            with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-                connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
+            if self.main_window.override_user_settings is False:
+                print (f"Manual speed setting: {self.main_window.speed}")
+                with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+                    connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
+            else:
+                print (f"Algorithm Override speed setting: {self.main_window.speed_override}")
+                
+                # NOTE: long calculation in constant speed setting is required to actually reach the desired X2 position, otherwise it stops earlier.
+                with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+                    connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed_override/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
+            print("INFO: Zaber move command started")
         except:
-            self.start_continuous_movement_x() # What is the purpose of this? Why does the y direction function not have it?
+            print("ERROR: Zaber move command failed")
+            self.start_continuous_movement_x() # retry
 
         self.main_window.Pixel_Interval_X.setInterval(self.main_window.time_timer_scan)
         self.main_window.Pixel_Interval_X.start()
@@ -192,9 +226,13 @@ class Scan_functions:
             Zab (_type_): _description_
             reference_Zab (_type_): _description_
         """
-        if abs(self.get_current_position(Zab) - reference_Zab) < 10:
+        current_position = self.get_current_position(Zab)
+        print(f"INFO: Check position Zaber {Zab}: {current_position}")
+        if abs(current_position - reference_Zab) < 10:
+            print("STATUS: final position reached")
             self.start_continuous_movement_x()
         else:
+            print("STATUS: continue movemement")
             QTimer.singleShot(500, self.main_window.check_position_and_start_X(Zab,reference_Zab))
 
     # Y-direction-scanning
@@ -247,18 +285,37 @@ class Scan_functions:
         newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
         return newcolor
 
+    def start_manual_scan(self):
+        """Starts a manual scan, makes sure the user interface settings are used.
+        """
+        self.main_window.override_user_settings = False
+        self.Scan_Continuos_X()
+
     def Scan_Continuos_X(self):
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
         if hasattr(self.main_window,'color_grid_widget'):
             self.reset_refresh_scan()
         
         #Update GUI Information
-        self.main_window.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())# / ((1.6381 / 1.9843))
-        self.main_window.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
-        self.main_window.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
-        self.main_window.Pos_X1_Scan = float(self.main_window.ui.load_pages.lineEdit_x1_scan.text())
-        self.main_window.Pos_X2_Scan = float(self.main_window.ui.load_pages.lineEdit_x2_scan.text())
-        self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
+        
+        if self.main_window.override_user_settings is False:
+            print("INFO: using user interface scan settings")
+            # Use user interface settings
+            self.main_window.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())# / ((1.6381 / 1.9843))
+            self.main_window.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
+            self.main_window.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
+            self.main_window.Pos_X1_Scan = float(self.main_window.ui.load_pages.lineEdit_x1_scan.text())
+            self.main_window.Pos_X2_Scan = float(self.main_window.ui.load_pages.lineEdit_x2_scan.text())
+            self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
+        else:
+            # Use algorithm override settings
+            print("INFO: using algorithm override scan settings")
+            self.main_window.speed = self.main_window.override_user_settings
+            self.main_window.Pos_Y1_Scan = self.main_window.Pos_Y1_Scan_override
+            self.main_window.Pos_Y2_Scan = self.main_window.Pos_Y2_Scan_override
+            self.main_window.Pos_X1_Scan = self.main_window.Pos_X1_Scan_override
+            self.main_window.Pos_X2_Scan = self.main_window.Pos_X2_Scan_override
+            self.main_window.cell_size = self.main_window.cell_size_override
         
         #Update everything
         self.main_window.g_W=int((self.main_window.Pos_X2_Scan-self.main_window.Pos_X1_Scan)/self.main_window.cell_size)
@@ -348,68 +405,74 @@ class Scan_functions:
 
         # End of line not reached:
         else:
+            try: 
             #Deviation estimation, vectorized by row by pixel
             
-            factor_PSD = 2 / (self.main_window.number_of_samples * self.main_window.Laser_Frequency)
-            self.main_window.Pixel_by_Row = self.main_window.Freq_Data.pow(2).mul(factor_PSD)
-            M0_Pixel=self.main_window.Pixel_by_Row.sum(axis=0)
-            M0_Pixel = M0_Pixel.replace(0, 1)
-            M1_Pixel=self.main_window.Pixel_by_Row.mul(self.main_window.dataFreq, axis=0)
-            M1_Pixel=M1_Pixel.sum(axis=0)
-            M_dev=M1_Pixel/M0_Pixel
-            #Set N of data to average fix length
-            if self.main_window.Samples_To_AVG_Flag==True:
-                self.main_window.Samples_To_AVG=len(M1_Pixel)
-                self.main_window.Samples_To_AVG_Flag=False
-            M_dev = pd.Series(np.resize(M_dev.to_numpy(), self.main_window.Samples_To_AVG))
-            self.main_window.Moment_Dev=pd.concat([self.main_window.Moment_Dev, M_dev], axis=1)
-            
-            
-            self.main_window.dataAmp_Avg=(self.main_window.Freq_Data.mean(axis=1))
-            
-            #Save Avg Spectrum
-            self.main_window.Data_Spectrum_Array=pd.concat([self.main_window.Data_Spectrum_Array, self.main_window.dataAmp_Avg], axis=1)
-            print('N Avg Samples')
-            print(self.main_window.Counter_DAQ_samples)
-            
-            if self.main_window.dataAmp_Avg.empty:
-                self.main_window.dataAmp_Avg=self.main_window.dataFreq*0
-                self.main_window.Freq_Data=self.main_window.dataFreq*0
+                factor_PSD = 2 / (self.main_window.number_of_samples * self.main_window.Laser_Frequency)
+                self.main_window.Pixel_by_Row = self.main_window.Freq_Data.pow(2).mul(factor_PSD)
+                M0_Pixel=self.main_window.Pixel_by_Row.sum(axis=0)
+                #print(M0_Pixel)
+                M0_Pixel = M0_Pixel.replace(0, 1)
+                M1_Pixel=self.main_window.Pixel_by_Row.mul(self.main_window.dataFreq, axis=0)
+                M1_Pixel=M1_Pixel.sum(axis=0)
+                M_dev=M1_Pixel/M0_Pixel
+                #Set N of data to average fix length
+                if self.main_window.Samples_To_AVG_Flag==True:
+                    self.main_window.Samples_To_AVG=len(M1_Pixel)
+                    self.main_window.Samples_To_AVG_Flag=False
+                M_dev = pd.Series(np.resize(M_dev.to_numpy(), self.main_window.Samples_To_AVG))
+                self.main_window.Moment_Dev=pd.concat([self.main_window.Moment_Dev, M_dev], axis=1)
+                
+                
+                self.main_window.dataAmp_Avg=(self.main_window.Freq_Data.mean(axis=1))
+                
+                #Save Avg Spectrum
+                self.main_window.Data_Spectrum_Array=pd.concat([self.main_window.Data_Spectrum_Array, self.main_window.dataAmp_Avg], axis=1)
+                
+                #print('N Avg Samples')
+                #print(self.main_window.Counter_DAQ_samples)
+                
+                if self.main_window.dataAmp_Avg.empty:
+                    self.main_window.dataAmp_Avg=self.main_window.dataFreq*0
+                    self.main_window.Freq_Data=self.main_window.dataFreq*0
 
-            # Make PSD discrete, as original equation is time domain and
-            # contains integral to infinity:
-            self.main_window.PSD_Avg_Moment=(self.main_window.dataAmp_Avg*self.main_window.dataAmp_Avg)*(2/(self.main_window.number_of_samples*self.main_window.Laser_Frequency))
-            
-            # Solve M0: simple sum of PSD.
-            #self.PSD_Avg_Moment = self.PSD_Avg_Moment[:n // 2]
-            M0 = np.sum(self.main_window.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
-            
-            # Solve division by 0.
-            if M0==0:
-                M0=1
-    
-            # Solve M1: multiplication of the frequency and the PSD.
-            M1 = np.sum(self.main_window.dataFreq * self.main_window.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
-            print('AVG Moment')
-            print(M1/M0)
-
-            # Save calculated moment to variable for flow velocity profile view.
-            colorcolor=int(M1/M0)
-
-            # Reset count data average and vector.
-            self.main_window.Counter_DAQ_samples=0
-            self.main_window.Freq_Data=pd.DataFrame()
-
-            # Determine color given to flow velocity profile pixel.
-            # Format is [R,G,B] so the pixel will be varying intensity of green.
-            # colorcolor => integer value of average momentum.
-            self.main_window.New_Color=[0, self.interpolation_Color(colorcolor), 0]
-
-            # Apply new color to pixel in flow velocity profile view
-            # and save measured momentum to CSV file            
-            self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Data_per_Pixel,self.main_window.counter_Step_Zaber_X, self.main_window.New_Color)
-            self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
+                # Make PSD discrete, as original equation is time domain and
+                # contains integral to infinity:
+                self.main_window.PSD_Avg_Moment=(self.main_window.dataAmp_Avg*self.main_window.dataAmp_Avg)*(2/(self.main_window.number_of_samples*self.main_window.Laser_Frequency))
+                
+                # Solve M0: simple sum of PSD.
+                #self.PSD_Avg_Moment = self.PSD_Avg_Moment[:n // 2]
+                M0 = np.sum(self.main_window.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
+                
+                # Solve division by 0.
+                if M0==0:
+                    M0=1
         
+                # Solve M1: multiplication of the frequency and the PSD.
+                M1 = np.sum(self.main_window.dataFreq * self.main_window.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
+                
+                #print('AVG Moment')
+                #print(M1/M0)
+
+                # Save calculated moment to variable for flow velocity profile view.
+                colorcolor=int(M1/M0)
+
+                # Reset count data average and vector.
+                self.main_window.Counter_DAQ_samples=0
+                self.main_window.Freq_Data=pd.DataFrame()
+
+                # Determine color given to flow velocity profile pixel.
+                # Format is [R,G,B] so the pixel will be varying intensity of green.
+                # colorcolor => integer value of average momentum.
+                self.main_window.New_Color=[0, self.interpolation_Color(colorcolor), 0]
+
+                # Apply new color to pixel in flow velocity profile view
+                # and save measured momentum to CSV file            
+                self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Data_per_Pixel,self.main_window.counter_Step_Zaber_X, self.main_window.New_Color)
+                self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
+
+            except :
+                print("error with change_pixel_daq")
             # Add one to data taken for this pixel
             self.main_window.counter_Data_per_Pixel+=1
             
@@ -420,17 +483,33 @@ class Scan_functions:
             if self.main_window.counter_Data_per_Pixel >= self.main_window.g_W: 
                 self.main_window.counter_Data_per_Pixel += 1
 
+    def determine_center_position(self):
+        start_coordinates = (25000, 25000) # center
+        scan_area_module.edge_scan(self.main_window, 'x', start_coordinates)
 
 def Set_Scanning_Tab(self, scan_functionality):
-    """Creates the scanning tab in the widget
+    """Functionality for the scanning tab in the widget
     WARNING: the Scan_functions class is dependent on this function
     """
     #Initialization
-    self.Pos_Y1_Scan = float(self.ui.load_pages.lineEdit_y1_scan.text())
+    # User input settings
+    self.Pos_Y1_Scan = float(self.ui.load_pages.lineEdit_y1_scan.text()) #NOTE: used or both X and Y scan
     self.Pos_Y2_Scan = float(self.ui.load_pages.lineEdit_y2_scan.text())
     self.speed = float(self.ui.load_pages.lineEdit_speed_ums.text()) * 1000 * 1.6381 / 1.9843
     self.time_timer_scan=0
     self.cell_size = int(self.ui.load_pages.lineEdit_Pixel_size.text())
+    # Algorithm Override input settings, will be changed by algorithms
+    self.override_user_settings = False 
+    # ^if True, the User Input settings from interface
+    # will not be used
+    self.Pos_X1_Scan_override = float(25000) # center
+    self.Pos_X2_Scan_override = float(25000)
+    self.Pos_Y1_Scan_override = float(25000)
+    self.Pos_Y2_Scan_override = float(25000)
+    self.speed_override  = float(200)
+    self.time_timer_scan_override =0 # not sure if this override is required
+    self.cell_size_override  = int(200)
+    
     self.counter_Data_per_Pixel=0 # Used for keeping track of current pixel
     self.current_col=0
     self.current_row=0

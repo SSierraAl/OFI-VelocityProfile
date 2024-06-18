@@ -1289,7 +1289,7 @@ class Ui_MainPages(object):
         self.Stop_x_but.setText(QCoreApplication.translate("MainPages", u"Stop X", None))
         self.continuous_scanX_but.setText(QCoreApplication.translate("MainPages", u"Continuos Scan X", None))
         self.Stop_Y_but.setText(QCoreApplication.translate("MainPages", u"Stop Y", None))
-        self.continuous_scanY_but.setText(QCoreApplication.translate("MainPages", u"Continuous Scan Y", None))
+        self.continuous_scanY_but.setText(QCoreApplication.translate("MainPages", u"Find Reference", None))
         self.Step_Step_but.setText(QCoreApplication.translate("MainPages", u"Stop DAQ", None))
         self.Calib_Reset_Scan_but.setText(QCoreApplication.translate("MainPages", u"Reset Grid", None))
         self.Vel_Report.setText(QCoreApplication.translate("MainPages", u"Velocity Profile Report", None))
