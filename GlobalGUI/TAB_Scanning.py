@@ -168,7 +168,7 @@ class Scan_functions:
     def start_continuous_movement_x(self):
         """Performs continous movement of Zaber NOTE: in X direction.
         Calculates time it takes to travel along entire distance and stops
-        the saber when this time, and thus distance, have passed.
+        the zaber when this time, and thus distance, have passed.
         """
         print("INFO: starting continuous movement X")
         # There should be some way to optimize this code with less lines, but it works at the moment. It is easiest to keep the override and manual things separate, to make sure there is
@@ -415,12 +415,15 @@ class Scan_functions:
                 M0_Pixel = M0_Pixel.replace(0, 1)
                 M1_Pixel=self.main_window.Pixel_by_Row.mul(self.main_window.dataFreq, axis=0)
                 M1_Pixel=M1_Pixel.sum(axis=0)
+                print(f"M1 pixel = {M1_Pixel}")
                 M_dev=M1_Pixel/M0_Pixel
+                
                 #Set N of data to average fix length
                 if self.main_window.Samples_To_AVG_Flag==True:
                     self.main_window.Samples_To_AVG=len(M1_Pixel)
                     self.main_window.Samples_To_AVG_Flag=False
                 M_dev = pd.Series(np.resize(M_dev.to_numpy(), self.main_window.Samples_To_AVG))
+                #self.main_window.moment_average = M_dev
                 self.main_window.Moment_Dev=pd.concat([self.main_window.Moment_Dev, M_dev], axis=1)
                 
                 
@@ -455,6 +458,8 @@ class Scan_functions:
                 #print(M1/M0)
 
                 # Save calculated moment to variable for flow velocity profile view.
+                # TODO: These two are double, and perform the same, but keeping it like this for now to make sure nothing breaks.
+                moment = M1/M0
                 colorcolor=int(M1/M0)
 
                 # Reset count data average and vector.
@@ -469,7 +474,7 @@ class Scan_functions:
                 # Apply new color to pixel in flow velocity profile view
                 # and save measured momentum to CSV file            
                 self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Data_per_Pixel,self.main_window.counter_Step_Zaber_X, self.main_window.New_Color)
-                self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
+                self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(moment),M0,M1)
 
             except :
                 print("error with change_pixel_daq")
@@ -485,6 +490,7 @@ class Scan_functions:
 
     def determine_center_position(self):
         start_coordinates = (25000, 25000) # center
+        #start_coordinates = (0, 25000) # center
         scan_area_module.edge_scan(self.main_window, 'x', start_coordinates)
 
 def Set_Scanning_Tab(self, scan_functionality):
@@ -519,6 +525,9 @@ def Set_Scanning_Tab(self, scan_functionality):
     self.Counter_DAQ_samples=0
     self.PSD_Avg_Moment=0
 
+    # edge scan
+    self.detect_edge_threshold = 30000 # check if this is correct
+    self.moment_average = 0
 
     #Graphic_Data_Update
     def Change_Pixel_DAQ():
