@@ -174,22 +174,18 @@ class Scan_functions:
         # There should be some way to optimize this code with less lines, but it works at the moment. It is easiest to keep the override and manual things separate, to make sure there is
         # no weird behaviour with other code.
         
-        if self.main_window.override_user_settings is False:
+        if self.main_window.edge_scan_mode is False:
             print("INFO: using interface settings for continuous movement")
             self.main_window.distance = abs(self.main_window.Pos_X2_Scan - self.main_window.Pos_X1_Scan)
-            self.main_window.time_to_travel = (self.main_window.distance / float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
+            self.main_window.time_to_travel = abs((self.main_window.distance / float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())))*1000 # Milliseconds
             self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text()) 
-            self.main_window.time_timer_scan=((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
+            self.main_window.time_timer_scan=abs((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
         else:
             print("INFO: using algorithm override settings for continuous movement")
-            #self.main_window.speed = self.main_window.speed_override # optional way of doing it
-            
             self.main_window.distance = abs(self.main_window.Pos_X2_Scan_override - self.main_window.Pos_X1_Scan_override)
-            self.main_window.time_to_travel = (self.main_window.distance / float(self.main_window.speed_override))*1000 # Milliseconds
-            #self.main_window.time_to_travel = (self.main_window.distance / float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()))*1000 # Milliseconds
-            
+            self.main_window.time_to_travel = abs(self.main_window.distance / float(self.main_window.speed_override))*1000 # Milliseconds
             self.main_window.cell_size = int(self.main_window.cell_size_override) 
-            self.main_window.time_timer_scan=((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
+            self.main_window.time_timer_scan=abs((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
        
         
         print(f"Speed settings: {self.main_window.speed} {float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())}, {self.main_window.speed_override}")
@@ -198,13 +194,12 @@ class Scan_functions:
 
         print("INFO: attempting Zaber move constant speed")
         try:
-            if self.main_window.override_user_settings is False:
+            if self.main_window.edge_scan_mode is False:
                 print (f"Manual speed setting: {self.main_window.speed}")
                 with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
                     connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
             else:
                 print (f"Algorithm Override speed setting: {self.main_window.speed_override}")
-                
                 # NOTE: long calculation in constant speed setting is required to actually reach the desired X2 position, otherwise it stops earlier.
                 with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
                     connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed_override/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
@@ -289,16 +284,26 @@ class Scan_functions:
         """Starts a manual scan, makes sure the user interface settings are used.
         """
         self.main_window.override_user_settings = False
+        self.main_window.edge_scan_mode = False
         self.Scan_Continuos_X()
 
     def Scan_Continuos_X(self):
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
         if hasattr(self.main_window,'color_grid_widget'):
             self.reset_refresh_scan()
+
+        try:
+            print(f"{self.main_window.threadDAQ}")
+        except:
+            print("INFO: no threadDAQ")
+            
+        if not hasattr(self.main_window, 'threadDAQ'):
+            print("EDGE SCAN MODE: starting DAQ")
+            DAQ_Reader_Global.Init_DAQ_Connection_algorithm(self.main_window)
         
+            
         #Update GUI Information
-        
-        if self.main_window.override_user_settings is False:
+        if self.main_window.edge_scan_mode is False:
             print("INFO: using user interface scan settings")
             # Use user interface settings
             self.main_window.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())# / ((1.6381 / 1.9843))
@@ -318,8 +323,8 @@ class Scan_functions:
             self.main_window.cell_size = self.main_window.cell_size_override
         
         #Update everything
-        self.main_window.g_W=int((self.main_window.Pos_X2_Scan-self.main_window.Pos_X1_Scan)/self.main_window.cell_size)
-        self.main_window.g_H=int((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.cell_size)
+        self.main_window.g_W=abs(int((self.main_window.Pos_X2_Scan-self.main_window.Pos_X1_Scan)/self.main_window.cell_size))
+        self.main_window.g_H=abs(int((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.cell_size))
         
         #Create Graph
         self.main_window.color_grid_widget = ColorGrid(self.main_window.g_H,self.main_window.g_W,self.main_window.cell_size)
@@ -354,8 +359,8 @@ class Scan_functions:
         self.main_window.Pos_X2_Scan = float(self.main_window.ui.load_pages.lineEdit_x2_scan.text())
         self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
         #Update everything
-        self.main_window.g_W=int((self.main_window.Pos_X2_Scan-self.main_window.Pos_X1_Scan)/self.main_window.cell_size)
-        self.main_window.g_H=int((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.cell_size)
+        self.main_window.g_W=abs(int((self.main_window.Pos_X2_Scan-self.main_window.Pos_X1_Scan)/self.main_window.cell_size)) #can't be negative
+        self.main_window.g_H=abs(int((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.cell_size))
         #Create Graph
         self.main_window.color_grid_widget = ColorGrid(self.main_window.g_H,self.main_window.g_W,self.main_window.cell_size)
         self.main_window.ui.load_pages.Layout_table_Scan.addWidget(self.main_window.color_grid_widget)
@@ -387,17 +392,26 @@ class Scan_functions:
                         +(((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.g_H)
                         *self.main_window.counter_Step_Zaber_X))
             
-            if new_x_pos>=self.main_window.Pos_Y2_Scan: # Why is new x position compared with y position?
+            # if final row has been finished, meaning all rows have been scanned
+            # OR if edge_scan_mode, because it only needs to scan 1 row.
+            if new_x_pos>=self.main_window.Pos_Y2_Scan or self.main_window.edge_scan_mode is True: 
+                if self.main_window.edge_scan_mode is True:
+                    print("EDGE SCAN MODE: No edge found")
                 
-                # Stop DAQ if it is already running, causes crash otherwise
-                if hasattr (DAQ_Reader_Global.daq_instance, 'threadDAQ'): #CHECK THIS
-                    DAQ_Reader_Global.Stop_DAQ() # CHECK THIS
+
                 
                 self.main_window.Adquisit_Timer.stop()
                 self.main_window.color_grid_widget.exportar_Matrix_CSV()
                 self.main_window.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
                 print('------  Scan finished --------')
                 print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
+                # Stop DAQ if it is already running, causes crash otherwise
+                if hasattr (self.main_window, 'threadDAQ'):
+                    DAQ_Reader_Global.Stop_DAQ_algorithm(self.main_window)
+                try: 
+                    print(self.main_window.threadDAQ)
+                except:
+                    print("no stop daq")
             else:
                 self.move_to_position(0,new_x_pos)
                 self.move_to_position(2,self.main_window.Pos_X1_Scan)
@@ -405,79 +419,111 @@ class Scan_functions:
 
         # End of line not reached:
         else:
-            try: 
+            # try: 
             #Deviation estimation, vectorized by row by pixel
             
-                factor_PSD = 2 / (self.main_window.number_of_samples * self.main_window.Laser_Frequency)
-                self.main_window.Pixel_by_Row = self.main_window.Freq_Data.pow(2).mul(factor_PSD)
-                M0_Pixel=self.main_window.Pixel_by_Row.sum(axis=0)
-                #print(M0_Pixel)
-                M0_Pixel = M0_Pixel.replace(0, 1)
-                M1_Pixel=self.main_window.Pixel_by_Row.mul(self.main_window.dataFreq, axis=0)
-                M1_Pixel=M1_Pixel.sum(axis=0)
-                print(f"M1 pixel = {M1_Pixel}")
-                M_dev=M1_Pixel/M0_Pixel
-                
-                #Set N of data to average fix length
-                if self.main_window.Samples_To_AVG_Flag==True:
-                    self.main_window.Samples_To_AVG=len(M1_Pixel)
-                    self.main_window.Samples_To_AVG_Flag=False
-                M_dev = pd.Series(np.resize(M_dev.to_numpy(), self.main_window.Samples_To_AVG))
-                #self.main_window.moment_average = M_dev
-                self.main_window.Moment_Dev=pd.concat([self.main_window.Moment_Dev, M_dev], axis=1)
-                
-                
-                self.main_window.dataAmp_Avg=(self.main_window.Freq_Data.mean(axis=1))
-                
-                #Save Avg Spectrum
-                self.main_window.Data_Spectrum_Array=pd.concat([self.main_window.Data_Spectrum_Array, self.main_window.dataAmp_Avg], axis=1)
-                
-                #print('N Avg Samples')
-                #print(self.main_window.Counter_DAQ_samples)
-                
-                if self.main_window.dataAmp_Avg.empty:
-                    self.main_window.dataAmp_Avg=self.main_window.dataFreq*0
-                    self.main_window.Freq_Data=self.main_window.dataFreq*0
+            factor_PSD = 2 / (self.main_window.number_of_samples * self.main_window.Laser_Frequency)
+            self.main_window.Pixel_by_Row = self.main_window.Freq_Data.pow(2).mul(factor_PSD)
+            M0_Pixel=self.main_window.Pixel_by_Row.sum(axis=0)
+            #print(M0_Pixel)
+            M0_Pixel = M0_Pixel.replace(0, 1)
+            M1_Pixel=self.main_window.Pixel_by_Row.mul(self.main_window.dataFreq, axis=0)
+            M1_Pixel=M1_Pixel.sum(axis=0)
+            M_dev=M1_Pixel/M0_Pixel
+            
+            #Set N of data to average fix length
+            if self.main_window.Samples_To_AVG_Flag==True:
+                self.main_window.Samples_To_AVG=len(M1_Pixel)
+                self.main_window.Samples_To_AVG_Flag=False
 
-                # Make PSD discrete, as original equation is time domain and
-                # contains integral to infinity:
-                self.main_window.PSD_Avg_Moment=(self.main_window.dataAmp_Avg*self.main_window.dataAmp_Avg)*(2/(self.main_window.number_of_samples*self.main_window.Laser_Frequency))
-                
-                # Solve M0: simple sum of PSD.
-                #self.PSD_Avg_Moment = self.PSD_Avg_Moment[:n // 2]
-                M0 = np.sum(self.main_window.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
-                
-                # Solve division by 0.
-                if M0==0:
-                    M0=1
-        
-                # Solve M1: multiplication of the frequency and the PSD.
-                M1 = np.sum(self.main_window.dataFreq * self.main_window.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])# / M0
-                
-                #print('AVG Moment')
-                #print(M1/M0)
+            M_dev = pd.Series(np.resize(M_dev.to_numpy(), self.main_window.Samples_To_AVG))
+            self.main_window.Moment_Dev=pd.concat([self.main_window.Moment_Dev, M_dev], axis=1)
+            self.main_window.dataAmp_Avg=(self.main_window.Freq_Data.mean(axis=1))
+            
+            #Save Avg Spectrum
+            self.main_window.Data_Spectrum_Array=pd.concat([self.main_window.Data_Spectrum_Array, self.main_window.dataAmp_Avg], axis=1)
+            
+            #print('N Avg Samples')
+            #print(self.main_window.Counter_DAQ_samples)
+            
+            if self.main_window.dataAmp_Avg.empty:
+                self.main_window.dataAmp_Avg=self.main_window.dataFreq*0
+                self.main_window.Freq_Data=self.main_window.dataFreq*0
 
-                # Save calculated moment to variable for flow velocity profile view.
-                # TODO: These two are double, and perform the same, but keeping it like this for now to make sure nothing breaks.
-                moment = M1/M0
-                colorcolor=int(M1/M0)
+            # Make PSD discrete, as original equation is time domain and
+            # contains integral to infinity:
+            self.main_window.PSD_Avg_Moment=(self.main_window.dataAmp_Avg*self.main_window.dataAmp_Avg)*(2/(self.main_window.number_of_samples*self.main_window.Laser_Frequency))
+            
+            # Solve M0: simple sum of PSD.
+            M0 = np.sum(self.main_window.PSD_Avg_Moment) 
+            
+            # Solve division by 0.
+            if M0==0:
+                M0=1
+    
+            # Solve M1: multiplication of the frequency and the PSD.
+            M1 = np.sum(self.main_window.dataFreq * self.main_window.PSD_Avg_Moment)
+            
+            print('AVG Moment')
+            print(M1/M0)
 
-                # Reset count data average and vector.
-                self.main_window.Counter_DAQ_samples=0
-                self.main_window.Freq_Data=pd.DataFrame()
+            # Save calculated moment to variable for flow velocity profile view.
+            # TODO: These two are double, and perform the same, but keeping it like this for now to make sure nothing breaks.
+            moment = M1/M0
+            
+            # For simulation purposes
+            self.main_window.simulation_counter += 1
+            if self.main_window.simulation_counter == 20:
+                self.main_window.simulation_counter = 0
+                moment = 70000
+            
+            colorcolor=int(M1/M0)
 
-                # Determine color given to flow velocity profile pixel.
-                # Format is [R,G,B] so the pixel will be varying intensity of green.
-                # colorcolor => integer value of average momentum.
-                self.main_window.New_Color=[0, self.interpolation_Color(colorcolor), 0]
+            # Reset count data average and vector.
+            self.main_window.Counter_DAQ_samples=0
+            self.main_window.Freq_Data=pd.DataFrame()
 
-                # Apply new color to pixel in flow velocity profile view
-                # and save measured momentum to CSV file            
-                self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Data_per_Pixel,self.main_window.counter_Step_Zaber_X, self.main_window.New_Color)
-                self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(moment),M0,M1)
+            # Determine color given to flow velocity profile pixel.
+            # Format is [R,G,B] so the pixel will be varying intensity of green.
+            # colorcolor => integer value of average moment.
+            self.main_window.New_Color=[0, self.interpolation_Color(colorcolor), 0]
+            
+            # Apply new color to pixel in flow velocity profile view
+            # and save measured momentum to CSV file            
+            self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Data_per_Pixel,self.main_window.counter_Step_Zaber_X, self.main_window.New_Color)
+            self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
+            
+            # if edge found
+            if self.main_window.edge_scan_mode is True and moment > self.main_window.detect_edge_threshold:
+                    # Stop DAQ and Zaber
+                    if hasattr (self.main_window , 'threadDAQ'):
+                        DAQ_Reader_Global.Stop_DAQ_algorithm(self.main_window)
+                        
+                    self.Stop_z2()
+                    self.main_window.Adquisit_Timer.stop()
+                    
+                    x = self.main_window.scan_functions_instance.get_current_position(2) # Get current position of X Zaber
+                    y = self.main_window.scan_functions_instance.get_current_position(0) # Get current position of Y Zaber
 
-            except :
-                print("error with change_pixel_daq")
+                    print(f"EDGE SCAN MODE: moment = {moment}")
+                    print(f"EDGE SCAN MODE: threshold = {self.main_window.detect_edge_threshold}")
+                    print(f"EDGE SCAN MODE: edge found at x = {x} um and y = {y} um")
+                    edge_coordinate = (x,y)
+                    self.main_window.edge_coordinate_array[self.main_window.edge_scan_count] = edge_coordinate
+                    print(self.main_window.edge_coordinate_array[self.main_window.edge_scan_count])
+                    
+                    self.main_window.edge_scan_count += 1
+                    # Run edge scan in different direction
+                    if self.main_window.edge_scan_count <= 3:
+                        scan_area_module.scan_all_edges(self.main_window, self.main_window.edge_scan_start_coordinates, self.main_window.edge_scan_count)
+                    
+
+                        
+                        
+
+
+            # except :
+            #     print("error with change_pixel_daq")
             # Add one to data taken for this pixel
             self.main_window.counter_Data_per_Pixel+=1
             
@@ -489,9 +535,12 @@ class Scan_functions:
                 self.main_window.counter_Data_per_Pixel += 1
 
     def determine_center_position(self):
-        start_coordinates = (25000, 25000) # center
+        self.main_window.edge_scan_start_coordinates = (25000, 25000) # center
         #start_coordinates = (0, 25000) # center
-        scan_area_module.edge_scan(self.main_window, 'x', start_coordinates)
+        self.main_window.edge_scan_count = 0
+        #scan_area_module.scan_all_edges(self.main_window, self.main_window.edge_scan_start_coordinates, self.main_window.edge_scan_count)
+        scan_area_module.edge_scan(self.main_window, 'x', self.main_window.edge_scan_start_coordinates)
+        
 
 def Set_Scanning_Tab(self, scan_functionality):
     """Functionality for the scanning tab in the widget
@@ -526,9 +575,12 @@ def Set_Scanning_Tab(self, scan_functionality):
     self.PSD_Avg_Moment=0
 
     # edge scan
-    self.detect_edge_threshold = 30000 # check if this is correct
-    self.moment_average = 0
-
+    self.detect_edge_threshold = 60000 # check if this is correct
+    self.edge_scan_mode = False
+    self.edge_scan_count = 0
+    self.edge_coordinate_array = [tuple()]*4 # create list of tuples
+    self.simulation_counter = 0 # delete later
+    self.edge_scan_start_coordinates = (25000, 25000)
     #Graphic_Data_Update
     def Change_Pixel_DAQ():
         """Changes the pixels in Y direction
@@ -549,8 +601,8 @@ def Set_Scanning_Tab(self, scan_functionality):
             new_x_pos=(self.Pos_X1_Scan+(((self.Pos_X2_Scan-self.Pos_X1_Scan)/self.g_W)*self.counter_Step_Zaber_X))
             if new_x_pos>=self.Pos_X2_Scan:
                 # Stop DAQ if it is running, causes crash otherwise
-                if hasattr (DAQ_Reader_Global.daq_instance, 'threadDAQ'):
-                    DAQ_Reader_Global.Stop_DAQ()
+                if hasattr (self, 'threadDAQ'):
+                    DAQ_Reader_Global.Stop_DAQ_algorithm(self.main_window)
                     
                 print('------  Scan finished --------')
                 print('NOTE: Do not forget to save .csv files to other directory before starting next scan')

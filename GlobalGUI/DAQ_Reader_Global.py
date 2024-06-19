@@ -18,13 +18,12 @@ import pandas as pd
 # Global holder for daq instance, for use by Stop_DAQ()
 # This change was done so TAB_Scanning.py has access to the function.
 # A better way could be to define Set_DAQ_Functions() as a class
-daq_instance = None 
-
+#daq_instance = None 
 
 def Set_DAQ_Functions(self):
     # Define daq_instance for use by Stop_DAQ() which is now outside of this function
-    global daq_instance
-    daq_instance =  self
+    #global daq_instance
+    #daq_instance =  self
         
     def Update_DAQ_Params(self):
         self.Laser_Frequency = float(self.ui.load_pages.lineEdit_Laser.text())
@@ -36,8 +35,6 @@ def Set_DAQ_Functions(self):
         self.low_freq_filter=float(self.ui.load_pages.lineEdit_Low_Freq.text())
         self.high_freq_filter=float(self.ui.load_pages.lineEdit_High_Freq.text())
         
-        
-
         #RMS average
         self.CounterAvg=0
         self.VectorsAvg=int(self.ui.load_pages.lineEdit_Avg_FFT.text()) # Graph hold peaks
@@ -61,27 +58,66 @@ def Set_DAQ_Functions(self):
         self.DAQ_X_Axis=np.array(self.DAQ_X_Axis)*1000/(self.Laser_Frequency)
         print("------ DAQ Reading Mode: On -------")
 
+    def Stop_DAQ():
+        '''Stops the DAQ, so it can be started again by the next scan'''
+        self.threadDAQ.deleteDAQ()
+        delattr(self, "threadDAQ")#WARNING: This is required, as the attribute is not deleted otherwise
+        # In TAB_Scanning, scan_continous_x, it is checked if there is an attribute named ThreadDAQ to check if a new thread can be started
+        # Without deleting the attribute, it still shows that the attribute exists, even though the .deleteDAQ() function has been performed.
 
+        print("------ DAQ Reading Mode: Off -------")
+        
     #Update DAQ Parameters in TAB DAQ
     self.ui.load_pages.DAQ_connect_but.clicked.connect(Init_DAQ_Connection)
     
     #Update DAQ Parameters in TAB Calib
     self.ui.load_pages.continuous_scanX_but.clicked.connect(Init_DAQ_Connection)
     #self.ui.load_pages.continuous_scanY_but.clicked.connect(Init_DAQ_Connection)
-    self.ui.load_pages.find_reference_but.clicked.connect(Init_DAQ_Connection)
+    #self.ui.load_pages.find_reference_but.clicked.connect(Init_DAQ_Connection)
     self.ui.load_pages.Step_Step_but.clicked.connect(Init_DAQ_Connection)
     self.ui.load_pages.Vel_Start_Calib.clicked.connect(Init_DAQ_Connection)
     
     #Stop DAQ
     self.ui.load_pages.Stop_x_but.clicked.connect(Stop_DAQ) #Stop X button
     self.ui.load_pages.Stop_Y_but.clicked.connect(Stop_DAQ) 
-
-
     self.ui.load_pages.Stop_DAQ_but.clicked.connect(Stop_DAQ) 
 
+def Update_DAQ_Params_algorithm(self):
+    self.Laser_Frequency = float(self.ui.load_pages.lineEdit_Laser.text())
+    self.fileSave=1
+    self.number_of_samples=int(self.ui.load_pages.lineEdit_number_samples.text())
+    self.DAQ_Device="Dev1/ai0"
+    # Band Pass Filter Params
+    self.order_filter=4
+    self.low_freq_filter=float(self.ui.load_pages.lineEdit_Low_Freq.text())
+    self.high_freq_filter=float(self.ui.load_pages.lineEdit_High_Freq.text())
+    
+    #RMS average
+    self.CounterAvg=0
+    self.VectorsAvg=int(self.ui.load_pages.lineEdit_Avg_FFT.text()) # Graph hold peaks
+    self.Freq_Data=pd.DataFrame()
+    
+    #Save Data
+    self.CounterPeaks=0
+    self.exten=".npy"
+    self.number_File=0
+
+def Init_DAQ_Connection_algorithm(main_window):
+    Update_DAQ_Params_algorithm(main_window)
+    # Creation of the thread
+    print("------ DAQ Thread Init -------")
+    main_window.threadDAQ = tds.DAQData(main_window.fileSave, main_window.Laser_Frequency, main_window.number_of_samples, main_window.DAQ_Device,main_window.fileSave)
+    main_window.DAQ_Data= main_window.threadDAQ.DAQ_Data
+    main_window.DAQ_X_Axis=main_window.threadDAQ.DAQ_X_Axis
+    main_window.DAQ_X_Axis=np.array(main_window.DAQ_X_Axis)*1000/(main_window.Laser_Frequency)
+    print("------ DAQ Reading Mode: On -------")
+
 # Function placed outside of Set_DAQ_Functions() so it can be used by TAB_Scanning.py
-def Stop_DAQ():
+def Stop_DAQ_algorithm(main_window):
     '''Stops the DAQ, so it can be started again by the next scan'''
-    daq_instance.threadDAQ.deleteDAQ()
-    #self.timerPLOT.stop()
+    main_window.threadDAQ.deleteDAQ()
+    delattr(main_window, "threadDAQ") #WARNING: This is required, as the attribute is not deleted otherwise
+    # In TAB_Scanning, scan_continous_x, it is checked if there is an attribute named ThreadDAQ to check if a new thread can be started
+    # Without deleting the attribute, it still shows that the attribute exists, even though the .deleteDAQ() function has been performed.
+
     print("------ DAQ Reading Mode: Off -------")
