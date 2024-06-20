@@ -299,7 +299,7 @@ class Scan_functions:
             
         if not hasattr(self.main_window, 'threadDAQ'):
             print("EDGE SCAN MODE: starting DAQ")
-            DAQ_Reader_Global.Init_DAQ_Connection_algorithm(self.main_window)
+            DAQ_Reader_Global.Init_DAQ_Connection_algorithm() #self.mainwindow
         
             
         #Update GUI Information
@@ -405,13 +405,16 @@ class Scan_functions:
                 self.main_window.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
                 print('------  Scan finished --------')
                 print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
+                
                 # Stop DAQ if it is already running, causes crash otherwise
                 if hasattr (self.main_window, 'threadDAQ'):
-                    DAQ_Reader_Global.Stop_DAQ_algorithm(self.main_window)
+                    DAQ_Reader_Global.Stop_DAQ_algorithm() #self.main_window
+                
+                # Verify that the threadDAQ attribute has been deleted
                 try: 
                     print(self.main_window.threadDAQ)
                 except:
-                    print("no stop daq")
+                    print("No threadDAQ")
             else:
                 self.move_to_position(0,new_x_pos)
                 self.move_to_position(2,self.main_window.Pos_X1_Scan)
@@ -497,7 +500,7 @@ class Scan_functions:
             if self.main_window.edge_scan_mode is True and moment > self.main_window.detect_edge_threshold:
                     # Stop DAQ and Zaber
                     if hasattr (self.main_window , 'threadDAQ'):
-                        DAQ_Reader_Global.Stop_DAQ_algorithm(self.main_window)
+                        DAQ_Reader_Global.Stop_DAQ_algorithm()#self.main_window
                         
                     self.Stop_z2()
                     self.main_window.Adquisit_Timer.stop()
@@ -602,7 +605,7 @@ def Set_Scanning_Tab(self, scan_functionality):
             if new_x_pos>=self.Pos_X2_Scan:
                 # Stop DAQ if it is running, causes crash otherwise
                 if hasattr (self, 'threadDAQ'):
-                    DAQ_Reader_Global.Stop_DAQ_algorithm(self.main_window)
+                    DAQ_Reader_Global.Stop_DAQ_algorithm() #self.main_window
                     
                 print('------  Scan finished --------')
                 print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
