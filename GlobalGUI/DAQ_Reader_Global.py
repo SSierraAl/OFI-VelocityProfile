@@ -28,6 +28,9 @@ def Set_DAQ_Functions(self):
     # Define daq_instance for use by Stop_DAQ() which is now outside of this function
     global main_window
     main_window =  self
+    
+    # Initialize the DAQ parameters
+    Update_DAQ_Params_algorithm()
         
     # def Update_DAQ_Params(self):
     #     self.Laser_Frequency = float(self.ui.load_pages.lineEdit_Laser.text())
@@ -49,7 +52,7 @@ def Set_DAQ_Functions(self):
     #     self.exten=".npy"
     #     self.number_File=0
 
-    # Update_DAQ_Params_algorithm()
+    #Update_DAQ_Params_algorithm()
 
 
     # def Init_DAQ_Connection():

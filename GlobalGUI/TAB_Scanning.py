@@ -297,9 +297,9 @@ class Scan_functions:
         except:
             print("INFO: no threadDAQ")
             
-        if not hasattr(self.main_window, 'threadDAQ'):
-            print("EDGE SCAN MODE: starting DAQ")
-            DAQ_Reader_Global.Init_DAQ_Connection_algorithm() #self.mainwindow
+        # if not hasattr(self.main_window, 'threadDAQ'):
+        #     print("EDGE SCAN MODE: starting DAQ")
+        #     DAQ_Reader_Global.Init_DAQ_Connection_algorithm()
         
             
         #Update GUI Information
@@ -341,6 +341,12 @@ class Scan_functions:
         self.main_window.Moment_Dev=pd.DataFrame()
         self.main_window.Samples_to_AVG=0
         self.main_window.Samples_To_AVG_Flag=True
+        
+        # Restart DAQ if required
+        if not hasattr(self.main_window, 'threadDAQ'):
+            print("EDGE SCAN MODE: starting DAQ")
+            DAQ_Reader_Global.Init_DAQ_Connection_algorithm()
+        
         # Move first to (X1,Y1)
         self.move_to_position(0,self.main_window.Pos_Y1_Scan)
         self.move_to_position(2,self.main_window.Pos_X1_Scan)
@@ -408,7 +414,7 @@ class Scan_functions:
                 
                 # Stop DAQ if it is already running, causes crash otherwise
                 if hasattr (self.main_window, 'threadDAQ'):
-                    DAQ_Reader_Global.Stop_DAQ_algorithm() #self.main_window
+                    DAQ_Reader_Global.Stop_DAQ_algorithm()
                 
                 # Verify that the threadDAQ attribute has been deleted
                 try: 
@@ -422,7 +428,6 @@ class Scan_functions:
 
         # End of line not reached:
         else:
-            # try: 
             #Deviation estimation, vectorized by row by pixel
             
             factor_PSD = 2 / (self.main_window.number_of_samples * self.main_window.Laser_Frequency)
@@ -500,7 +505,7 @@ class Scan_functions:
             if self.main_window.edge_scan_mode is True and moment > self.main_window.detect_edge_threshold:
                     # Stop DAQ and Zaber
                     if hasattr (self.main_window , 'threadDAQ'):
-                        DAQ_Reader_Global.Stop_DAQ_algorithm()#self.main_window
+                        DAQ_Reader_Global.Stop_DAQ_algorithm()
                         
                     self.Stop_z2()
                     self.main_window.Adquisit_Timer.stop()
@@ -519,14 +524,7 @@ class Scan_functions:
                     # Run edge scan in different direction
                     if self.main_window.edge_scan_count <= 3:
                         scan_area_module.scan_all_edges(self.main_window, self.main_window.edge_scan_start_coordinates, self.main_window.edge_scan_count)
-                    
 
-                        
-                        
-
-
-            # except :
-            #     print("error with change_pixel_daq")
             # Add one to data taken for this pixel
             self.main_window.counter_Data_per_Pixel+=1
             
@@ -597,7 +595,8 @@ def Set_Scanning_Tab(self, scan_functionality):
         #The final Y position is reach
         if self.counter_Data_per_Pixel >= (self.g_H):
             self.counter_Data_per_Pixel=0
-            scan_functionality.Stop_z1() #Stop the movement
+            #Stop the movement
+            scan_functionality.Stop_z1()
             #Reset the position
             self.counter_Step_Zaber_X+=1
             #Move to te next X position
