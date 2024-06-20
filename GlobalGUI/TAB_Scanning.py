@@ -116,7 +116,6 @@ class Scan_functions:
         self.main_window.ui.load_pages.continuous_scanX_but.clicked.connect(self.start_manual_scan)
         
         # changed for testing new scan area functions:
-        #self.main_window.ui.load_pages.continuous_scanY_but.clicked.connect(self.determine_center_position)
         self.main_window.ui.load_pages.find_reference_but.clicked.connect(self.determine_center_position)
         
     def reset_refresh_scan(self):
@@ -285,9 +284,9 @@ class Scan_functions:
         """
         self.main_window.override_user_settings = False
         self.main_window.edge_scan_mode = False
-        self.Scan_Continuos_X()
+        self.Scan_Continuous(axis='x')
 
-    def Scan_Continuos_X(self):
+    def Scan_Continuous(self, axis):
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
         if hasattr(self.main_window,'color_grid_widget'):
             self.reset_refresh_scan()
@@ -327,11 +326,15 @@ class Scan_functions:
         self.main_window.current_row=0
         self.main_window.New_Color= [255,255,255] # [R,G,B] => WHITE
 
+        # scan x and y same until this point
+        
+        #scan y doesnt have this part
         # Average dev flow rate
         self.main_window.Moment_Dev=pd.DataFrame()
         self.main_window.Samples_to_AVG=0
         self.main_window.Samples_To_AVG_Flag=True
 
+        # This is also the same
         # Move first to (X1,Y1)
         self.move_to_position(0,self.main_window.Pos_Y1_Scan)
         self.move_to_position(2,self.main_window.Pos_X1_Scan)
@@ -348,8 +351,16 @@ class Scan_functions:
             print("EDGE SCAN MODE: starting DAQ")
             DAQ_Reader_Global.Init_DAQ_Connection_algorithm()
 
+        # this is different for x and y
         # Start scan
-        self.check_position_and_start_X(2,self.main_window.Pos_X1_Scan)
+        # TODO: combine check_position_and_start into one single function with axis argument too
+        if axis == 'x':
+            self.check_position_and_start_X(2,self.main_window.Pos_X1_Scan) #combine this
+        elif axis == 'y':
+            self.check_position_and_start(0,self.main_window.Pos_Y1_Scan)
+        else:
+            # PLACEHOLDER for adding Z axis if desired someday.
+            print("Invalid axis argument")
 
     def Scan_Continuos_Y(self):
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
@@ -381,6 +392,7 @@ class Scan_functions:
         self.check_position_and_start(0,self.main_window.Pos_Y1_Scan)
 
     def Change_Pixel_DAQ_X(self):
+        
         #Stop condition:
         #Reach end of a line
         if self.main_window.counter_Data_per_Pixel >= (self.main_window.g_W):
@@ -497,8 +509,23 @@ class Scan_functions:
             self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Data_per_Pixel,self.main_window.counter_Step_Zaber_X, self.main_window.New_Color)
             self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
             
+            # Add one to data taken for this pixel
+            self.main_window.counter_Data_per_Pixel+=1
+            
+            # Change current_column to next pixel (next column)
+            self.main_window.current_col= self.main_window.counter_Data_per_Pixel
+
+            # Why increment with one if the max width has been exceeded?
+            if self.main_window.counter_Data_per_Pixel >= self.main_window.g_W: 
+                self.main_window.counter_Data_per_Pixel += 1
+                
             # if edge found
             if self.main_window.edge_scan_mode is True and moment > self.main_window.detect_edge_threshold:
+                    
+                    # Reset to 0 so next scan won't start at 1st index, ATTEMPT
+                    # self.main_window.counter_Data_per_Pixel=0
+                    # self.main_window.counter_Step_Zaber_X=0
+                    
                     # Stop DAQ and Zaber
                     if hasattr (self.main_window , 'threadDAQ'):
                         DAQ_Reader_Global.Stop_DAQ_algorithm()
@@ -521,15 +548,7 @@ class Scan_functions:
                     if self.main_window.edge_scan_count <= 3:
                         scan_area_module.scan_all_edges(self.main_window, self.main_window.edge_scan_start_coordinates, self.main_window.edge_scan_count)
 
-            # Add one to data taken for this pixel
-            self.main_window.counter_Data_per_Pixel+=1
-            
-            # Change current_column to next pixel (next column)
-            self.main_window.current_col= self.main_window.counter_Data_per_Pixel
 
-            # Why increment with one if the max width has been exceeded?
-            if self.main_window.counter_Data_per_Pixel >= self.main_window.g_W: 
-                self.main_window.counter_Data_per_Pixel += 1
 
     def determine_center_position(self):
         self.main_window.edge_scan_start_coordinates = (25000, 25000) # center
