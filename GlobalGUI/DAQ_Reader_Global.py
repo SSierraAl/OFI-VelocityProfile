@@ -15,8 +15,8 @@ import Thread_DAQ_single as tds
 
 import pandas as pd
 
-# Global holder for daq instance, for use by Stop_DAQ()
-# This change was done so TAB_Scanning.py has access to the function.
+# Global holder for main_window, so other functions have access to it.
+# This change was done so TAB_Scanning.py has access to the functions.
 # A better way could be to define Set_DAQ_Functions() as a class
 main_window = None 
 
@@ -24,61 +24,22 @@ def Set_DAQ_Functions(self):
     """Connects the interface buttons to the DAQ functions.
     NOTE: this used to contain all the functions, but these have now been moved outside of the Set_DAQ_Functions.
     NOTE 2: the main_window = self designation is crucial for proper functioning of those external functions.
+    NOTE 3: scan_continuous_x now automatically starts the DAQ if it is not started yet, so no button has to be connected
+    to the Init_DAQ_Connection function if using this function.
     """
-    # Define daq_instance for use by Stop_DAQ() which is now outside of this function
+    # Define main_window for use by other functions
     global main_window
     main_window =  self
     
     # Initialize the DAQ parameters
     Update_DAQ_Params_algorithm()
-        
-    # def Update_DAQ_Params(self):
-    #     self.Laser_Frequency = float(self.ui.load_pages.lineEdit_Laser.text())
-    #     self.fileSave=1
-    #     self.number_of_samples=int(self.ui.load_pages.lineEdit_number_samples.text())
-    #     self.DAQ_Device="Dev1/ai0"
-    #     # Band Pass Filter Params
-    #     self.order_filter=4
-    #     self.low_freq_filter=float(self.ui.load_pages.lineEdit_Low_Freq.text())
-    #     self.high_freq_filter=float(self.ui.load_pages.lineEdit_High_Freq.text())
-        
-    #     #RMS average
-    #     self.CounterAvg=0
-    #     self.VectorsAvg=int(self.ui.load_pages.lineEdit_Avg_FFT.text()) # Graph hold peaks
-    #     self.Freq_Data=pd.DataFrame()
-        
-    #     #Save Data
-    #     self.CounterPeaks=0
-    #     self.exten=".npy"
-    #     self.number_File=0
-
-    #Update_DAQ_Params_algorithm()
-
-
-    # def Init_DAQ_Connection():
-    #     Update_DAQ_Params(self)
-    #     # Creation of the thread
-    #     print("------ DAQ Thread Init -------")
-    #     self.threadDAQ = tds.DAQData(self.fileSave, self.Laser_Frequency, self.number_of_samples, self.DAQ_Device,self.fileSave)
-    #     self.DAQ_Data= self.threadDAQ.DAQ_Data
-    #     self.DAQ_X_Axis=self.threadDAQ.DAQ_X_Axis
-    #     self.DAQ_X_Axis=np.array(self.DAQ_X_Axis)*1000/(self.Laser_Frequency)
-    #     print("------ DAQ Reading Mode: On -------")
-
-    # def Stop_DAQ():
-    #     '''Stops the DAQ, so it can be started again by the next scan'''
-    #     self.threadDAQ.deleteDAQ()
-    #     delattr(self, "threadDAQ")#WARNING: This is required, as the attribute is not deleted otherwise
-    #     # In TAB_Scanning, scan_continous_x, it is checked if there is an attribute named ThreadDAQ to check if a new thread can be started
-    #     # Without deleting the attribute, it still shows that the attribute exists, even though the .deleteDAQ() function has been performed.
-    #     print("------ DAQ Reading Mode: Off -------")
-        
+               
     # Connect interface buttons to functions#    
     #Update DAQ Parameters in TAB DAQ
     self.ui.load_pages.DAQ_connect_but.clicked.connect(Init_DAQ_Connection_algorithm)
     
     #Update DAQ Parameters in TAB Calib
-    self.ui.load_pages.continuous_scanX_but.clicked.connect(Init_DAQ_Connection_algorithm)
+    #self.ui.load_pages.continuous_scanX_but.clicked.connect(Init_DAQ_Connection_algorithm)
     self.ui.load_pages.Step_Step_but.clicked.connect(Init_DAQ_Connection_algorithm)
     self.ui.load_pages.Vel_Start_Calib.clicked.connect(Init_DAQ_Connection_algorithm)
     
@@ -88,6 +49,8 @@ def Set_DAQ_Functions(self):
     self.ui.load_pages.Stop_DAQ_but.clicked.connect(Stop_DAQ_algorithm) 
 
 def Update_DAQ_Params_algorithm():
+    """Updates the DAQ parameters from the user interface and general values
+    """
     #global main_window
     main_window.Laser_Frequency = float(main_window.ui.load_pages.lineEdit_Laser.text())
     main_window.fileSave=1
@@ -110,7 +73,8 @@ def Update_DAQ_Params_algorithm():
     main_window.number_File=0
 
 def Init_DAQ_Connection_algorithm():
-    #global main_window
+    """Starts DAQ thread for taking measurements
+    """
     Update_DAQ_Params_algorithm()
     # Creation of the thread
     print("------ DAQ Thread Init -------")

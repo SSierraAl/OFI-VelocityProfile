@@ -8,9 +8,6 @@ def edge_scan(main_window, direction, start_coordinates):
     Args:
         direction (string): 'x', '-x', 'y' , '-y'
         start_coordinates (_type_): (X,Y) tuple
-
-    Returns:
-        tuple: tuple containing (X,Y)
     """
     main_window.speed_override  = float(400)
     main_window.time_timer_scan_override =0 # not sure if this override is required

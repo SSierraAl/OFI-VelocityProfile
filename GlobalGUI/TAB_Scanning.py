@@ -248,7 +248,6 @@ class Scan_functions:
         self.main_window.Pixel_Interval.start()
         self.main_window.Adquisit_Timer.start()
         
-    # Y-direction-scanning
     #Initial_Move
     def check_position_and_start(self, Zab, reference_Zab):
         if abs(self.get_current_position(Zab) - reference_Zab) < 10:
@@ -257,6 +256,7 @@ class Scan_functions:
             QTimer.singleShot(500, self.main_window.check_position_and_start(Zab,reference_Zab))
 
         #Color pixel adjustment
+
     def interpolation_Color(self, oldcolor):
         """Adjusts the displayed color of flow velocity profile display 
         -(dark green, bright green etc.)
@@ -291,22 +291,12 @@ class Scan_functions:
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
         if hasattr(self.main_window,'color_grid_widget'):
             self.reset_refresh_scan()
-
-        try:
-            print(f"{self.main_window.threadDAQ}")
-        except:
-            print("INFO: no threadDAQ")
-            
-        # if not hasattr(self.main_window, 'threadDAQ'):
-        #     print("EDGE SCAN MODE: starting DAQ")
-        #     DAQ_Reader_Global.Init_DAQ_Connection_algorithm()
-        
             
         #Update GUI Information
         if self.main_window.edge_scan_mode is False:
             print("INFO: using user interface scan settings")
             # Use user interface settings
-            self.main_window.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())# / ((1.6381 / 1.9843))
+            self.main_window.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())
             self.main_window.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
             self.main_window.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
             self.main_window.Pos_X1_Scan = float(self.main_window.ui.load_pages.lineEdit_x1_scan.text())
@@ -335,21 +325,30 @@ class Scan_functions:
         self.main_window.counter_Step_Zaber_X=0
         self.main_window.current_col=0
         self.main_window.current_row=0
-        self.main_window.New_Color= [255,255,255]
+        self.main_window.New_Color= [255,255,255] # [R,G,B] => WHITE
 
         # Average dev flow rate
         self.main_window.Moment_Dev=pd.DataFrame()
         self.main_window.Samples_to_AVG=0
         self.main_window.Samples_To_AVG_Flag=True
-        
-        # Restart DAQ if required
-        if not hasattr(self.main_window, 'threadDAQ'):
-            print("EDGE SCAN MODE: starting DAQ")
-            DAQ_Reader_Global.Init_DAQ_Connection_algorithm()
-        
+
         # Move first to (X1,Y1)
         self.move_to_position(0,self.main_window.Pos_Y1_Scan)
         self.move_to_position(2,self.main_window.Pos_X1_Scan)
+        
+        # Debug message if DAQ thread already exists
+        try:
+            print(f"{self.main_window.threadDAQ}")
+        except:
+            print("INFO: no threadDAQ exists")
+        # (Re)start DAQ if required.
+        # NOTE: this is intentionally done after move_to_position, to make sure the DAQ
+        # does not start measuring things during the movement to the starting position
+        if not hasattr(self.main_window, 'threadDAQ'):
+            print("EDGE SCAN MODE: starting DAQ")
+            DAQ_Reader_Global.Init_DAQ_Connection_algorithm()
+
+        # Start scan
         self.check_position_and_start_X(2,self.main_window.Pos_X1_Scan)
 
     def Scan_Continuos_Y(self):
@@ -403,9 +402,7 @@ class Scan_functions:
             if new_x_pos>=self.main_window.Pos_Y2_Scan or self.main_window.edge_scan_mode is True: 
                 if self.main_window.edge_scan_mode is True:
                     print("EDGE SCAN MODE: No edge found")
-                
-
-                
+                                
                 self.main_window.Adquisit_Timer.stop()
                 self.main_window.color_grid_widget.exportar_Matrix_CSV()
                 self.main_window.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
@@ -416,11 +413,11 @@ class Scan_functions:
                 if hasattr (self.main_window, 'threadDAQ'):
                     DAQ_Reader_Global.Stop_DAQ_algorithm()
                 
-                # Verify that the threadDAQ attribute has been deleted
+                # Debug message to verify that the threadDAQ attribute has been deleted
                 try: 
                     print(self.main_window.threadDAQ)
                 except:
-                    print("No threadDAQ")
+                    print("No threadDAQ exists")
             else:
                 self.move_to_position(0,new_x_pos)
                 self.move_to_position(2,self.main_window.Pos_X1_Scan)
@@ -433,7 +430,6 @@ class Scan_functions:
             factor_PSD = 2 / (self.main_window.number_of_samples * self.main_window.Laser_Frequency)
             self.main_window.Pixel_by_Row = self.main_window.Freq_Data.pow(2).mul(factor_PSD)
             M0_Pixel=self.main_window.Pixel_by_Row.sum(axis=0)
-            #print(M0_Pixel)
             M0_Pixel = M0_Pixel.replace(0, 1)
             M1_Pixel=self.main_window.Pixel_by_Row.mul(self.main_window.dataFreq, axis=0)
             M1_Pixel=M1_Pixel.sum(axis=0)
