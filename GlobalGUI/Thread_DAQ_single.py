@@ -26,7 +26,8 @@ class WorkerDAQ(QObject):
         # Definition of all variables needed to take the data and do the coms with NI DAQ
         self.Laser_frequency=Laser_frequency
         self.Number_to_mean=int(Number_to_mean)
-        self.DAQ_Device=DAQ_Device  #"Dev1/ai0"
+        #self.DAQ_Device=DAQ_Device  #"Dev1/ai0" OLD IMPLEMN
+        self.DAQ_Device= DAQ_Device #"Dev1/ai0"
         self.number_of_samples=int(number_of_samples)
         # Variables to store the most important info
         self.DAQ_X_Axis = list(range(self.number_of_samples))
@@ -41,6 +42,7 @@ class WorkerDAQ(QObject):
         with nidaqmx.Task() as task_Laser:
             #Signal Adquisition ########################################################
             #Add Sensor
+            print(f"INFO: {self.DAQ_Device} ")
             task_Laser.ai_channels.add_ai_voltage_chan(self.DAQ_Device,max_val=5, min_val=-5)
             # Set Sampling clocks
             task_Laser.timing.cfg_samp_clk_timing(rate=self.Laser_frequency, sample_mode=constants.AcquisitionType.CONTINUOUS)

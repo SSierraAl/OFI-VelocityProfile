@@ -2,7 +2,8 @@
 
 import zaber_motion
 from zaber_motion import Units
-from zaber_motion.binary import Connection,CommandCode
+#from zaber_motion.binary import Connection,CommandCode
+from zaber_motion.ascii import Connection
 from random import randint
 import numpy as np
 import pyqtgraph as pg
@@ -55,7 +56,8 @@ def Update_DAQ_Params_algorithm():
     main_window.Laser_Frequency = float(main_window.ui.load_pages.lineEdit_Laser.text())
     main_window.fileSave=1
     main_window.number_of_samples=int(main_window.ui.load_pages.lineEdit_number_samples.text())
-    main_window.DAQ_Device="Dev1/ai0"
+    #main_window.DAQ_Device="Dev1/ai0" #OLD SETUP
+    main_window.DAQ_Device= "Dev2/ai0"
     
     # Band Pass Filter Params
     main_window.order_filter=4

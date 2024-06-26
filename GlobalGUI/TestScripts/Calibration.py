@@ -14,7 +14,8 @@ import matlab.engine
 
 import zaber_motion
 from zaber_motion import Units
-from zaber_motion.binary import Connection,CommandCode
+#from zaber_motion.binary import Connection,CommandCode
+from zaber_motion.ascii import Connection
 
 import time
 

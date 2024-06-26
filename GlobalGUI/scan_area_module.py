@@ -24,6 +24,7 @@ def edge_scan(main_window, direction, start_coordinates):
         print(f"Starting algorithm edge scan with starting position {start_coordinates[0]}, {start_coordinates[1]}")
         main_window.Pos_X1_Scan_override = float(start_coordinates[0]) # x part of X,Y tuple
         main_window.Pos_X2_Scan_override = float(49800) # end of Zaber with small margin
+        #main_window.Pos_X2_Scan_override = float(49800) # end of Zaber with small margin
         main_window.Pos_Y1_Scan_override = float(start_coordinates[1]) # y of X,Y tuple
         main_window.Pos_Y2_Scan_override = float(start_coordinates[1]+(2*main_window.cell_size_override)) #WARNING: needs 2 rows (2 x cell size), crashes otherwise.
     

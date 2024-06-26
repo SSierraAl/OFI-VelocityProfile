@@ -10,7 +10,8 @@ from PySide6.QtGui import QColor
 
 import zaber_motion
 from zaber_motion import Units
-from zaber_motion.binary import Connection,CommandCode
+#from zaber_motion.binary import Connection,CommandCode
+from zaber_motion.ascii import Connection
 
 import DAQ_Reader_Global # Import for use of stop_daq() function
 import scan_area_module
@@ -142,7 +143,7 @@ class Scan_functions:
         self.main_window.Pixel_Interval_X.stop()
         self.main_window.Adquisit_Timer.stop()
         with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-            connection.generic_command(1, CommandCode.STOP, 1)
+            connection.generic_command("stop", 1, 0, True, 50)
 
     # Stop Zaber in X orientation
     def Stop_z2(self):
@@ -150,19 +151,37 @@ class Scan_functions:
         self.main_window.Pixel_Interval_X.stop()
         self.main_window.Adquisit_Timer.stop()
         with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-            connection.generic_command(3, CommandCode.STOP, 1)
+            connection.generic_command("stop", 2, 0, True, 50)
             
-    def move_to_position(self, Zab,position):
+    def move_to_position(self, Zab, position):
         with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
             device_list = connection.detect_devices()
-            device_list[Zab].move_absolute(position, Units.LENGTH_MICROMETRES)
+            print(f"INFO: Moving Zaber {Zab} to position {position} ")
+            
+            # UNIT CONVERSION: position = data x (Micropstep Size)
+            # data = position / microstep size
+            position_absolute = int(position / (0.047625)) #* 10**(-6))
+            response = connection.generic_command(f"move abs {position_absolute}", 1, 0, True, 50)
+            #print(response)
+            
+            actual_status = connection.generic_command("get motion.busy", 1, 0, True, 500)
+            while actual_status.status == 'BUSY':
+                actual_status = connection.generic_command("get motion.busy", 1, 0, True, 500)
+            
+            # device_list[Zab].move_absolute(position, Units.LENGTH_MICROMETRES)
 
     def get_current_position(self, Zab):
         with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
             device_list = connection.detect_devices()
-            act_pos=device_list[Zab].get_position(Units.LENGTH_MICROMETRES)
-            return act_pos
-
+            
+            return_value = connection.generic_command("get pos", Zab, 0, True, 500)
+            current_position_absolute = float(return_value.data) #NOTE: .data contains the absolute position
+            # Unit conversion: position = data × (Microstep Size)
+            current_position_um = current_position_absolute * (0.047625 * 10**(-6))
+            print(current_position_um)
+            
+            #act_pos=device_list[Zab].get_position(Units.LENGTH_MICROMETRES)
+            return current_position_um
     # X-direction-scanning
     def start_continuous_movement_x(self):
         """Performs continous movement of Zaber NOTE: in X direction.
@@ -195,13 +214,26 @@ class Scan_functions:
         try:
             if self.main_window.edge_scan_mode is False:
                 print (f"Manual speed setting: {self.main_window.speed}")
+                # UNIT CONVERSION: velocity  = data × (Microstep Size) / (1.6384 s)
+                # data = velocity / (Microstep Size) * (1.6384 s)
+                speed_absolute = self.main_window.speed / (0.047625 * 10**(-6)) * 1.6384
+                print(speed_absolute)
+                #speed_absolute = self.main_window.speed * (0.047625 * 10**(-6)) / 1.6384
                 with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-                    connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
+                    connection.generic_command(f"move vel {speed_absolute}]", 1, 0, True, 500)    
+                    #connection.generic_command("move vel 500", 1, 0, True, 500)
+                    # connection.generic_command(1, .MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
             else:
                 print (f"Algorithm Override speed setting: {self.main_window.speed_override}")
+                
+                # UNIT CONVERSION: velocity = data × (Microstep Size) / (1.6384 s)
+                override_speed_absolute = self.main_window.speed_override / (0.047625 * 10**(-6)) * 1.6384
+                print(override_speed_absolute)
+                #speed_absolute = self.main_window.speed_override * (0.047625 * 10^(-6)) / 1.6384
                 # NOTE: long calculation in constant speed setting is required to actually reach the desired X2 position, otherwise it stops earlier.
                 with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-                    connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed_override/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
+                    connection.generic_command(f"move vel {override_speed_absolute}]", 1, 0, True, 500)
+                    #connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed_override/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
             print("INFO: Zaber move command started")
         except:
             print("ERROR: Zaber move command failed")
@@ -226,7 +258,7 @@ class Scan_functions:
             print("STATUS: final position reached")
             self.start_continuous_movement_x()
         else:
-            print("STATUS: continue movemement")
+            print("STATUS: continue movement")
             QTimer.singleShot(500, self.main_window.check_position_and_start_X(Zab,reference_Zab))
 
     # Y-direction-scanning
@@ -395,7 +427,10 @@ class Scan_functions:
         
         #Stop condition:
         #Reach end of a line
-        if self.main_window.counter_Data_per_Pixel >= (self.main_window.g_W):
+        # TODO: create new main window variable axis and change it accordingly.
+        axis = 'x'
+        if ((axis == 'x' and self.main_window.counter_Data_per_Pixel >= (self.main_window.g_W))
+            or (axis == 'y' and self.main_window.counter_Data_per_Pixel >= (self.main_window.g_H))):
             self.main_window.counter_Data_per_Pixel=0
             self.Stop_z2() # Stop the movement
             actual_pos=(self.main_window.Pos_Y1_Scan+(((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.g_H)*self.main_window.counter_Step_Zaber_X))
@@ -486,6 +521,7 @@ class Scan_functions:
             # Save calculated moment to variable for flow velocity profile view.
             # TODO: These two are double, and perform the same, but keeping it like this for now to make sure nothing breaks.
             moment = M1/M0
+            colorcolor=int(M1/M0)
             
             # For simulation purposes
             self.main_window.simulation_counter += 1
@@ -493,7 +529,7 @@ class Scan_functions:
                 self.main_window.simulation_counter = 0
                 moment = 70000
             
-            colorcolor=int(M1/M0)
+            
 
             # Reset count data average and vector.
             self.main_window.Counter_DAQ_samples=0
@@ -622,7 +658,6 @@ def Set_Scanning_Tab(self, scan_functionality):
                     DAQ_Reader_Global.Stop_DAQ_algorithm() #self.main_window
                     
                 print('------  Scan finished --------')
-                print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
                 self.Adquisit_Timer.stop()
             else:
                 scan_functionality.move_to_position(2,new_x_pos)
@@ -649,14 +684,12 @@ def Set_Scanning_Tab(self, scan_functionality):
             self.Freq_Data=pd.DataFrame()
             self.New_Color=[0, newcolor, 0]
 
-
             self.color_grid_widget.changeCellColor(self.counter_Step_Zaber_X, self.counter_Data_per_Pixel, self.New_Color)
             self.counter_Data_per_Pixel+=1
             self.current_col= self.counter_Data_per_Pixel
 
             if self.counter_Data_per_Pixel >= self.g_H:
                 self.counter_Data_per_Pixel += 1
-
 
     def Capture_Data_Avg():
         

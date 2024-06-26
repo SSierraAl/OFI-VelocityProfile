@@ -21,7 +21,7 @@ class GraphTest(QMainWindow):
         self.data_line =  self.graphWidget.plot(self.x, self.y, pen=pen)
 
         self.timer = QTimer()
-        self.timer.setInterval(1/2000000)
+        self.timer.setInterval(1/1000000) #OLD SETUP: 1/2000000
         self.timer.timeout.connect(self.update_plot_data)
         self.timer.start()
 
