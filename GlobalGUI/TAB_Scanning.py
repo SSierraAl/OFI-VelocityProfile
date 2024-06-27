@@ -181,7 +181,7 @@ class Scan_functions:
             current_position_absolute = float(return_value.data) #NOTE: .data contains the absolute position
             # Unit conversion: position = data × (Microstep Size)
             current_position_um = current_position_absolute * (0.047625) #* 10**(-6))
-            print(current_position_um)
+            print(f"Current position of Zaber {Zab}: {current_position_um} um")
             
             #act_pos=device_list[Zab].get_position(Units.LENGTH_MICROMETRES)
             return current_position_um
@@ -394,12 +394,12 @@ class Scan_functions:
         # Start scan
         # TODO: combine check_position_and_start into one single function with axis argument too
         if axis == 'x':
-            self.check_position_and_start_X(1,self.main_window.Pos_X1_Scan) #combine this
+            self.check_position_and_start_X(1,self.main_window.Pos_X1_Scan)
         elif axis == 'y':
             self.check_position_and_start(2,self.main_window.Pos_Y1_Scan)
         else:
             # PLACEHOLDER for adding Z axis if desired someday.
-            print("Invalid axis argument")
+            print("ERROR: invalid axis argument")
 
     def Scan_Continuos_Y(self):
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
@@ -815,6 +815,7 @@ def Set_Scanning_Tab(self, scan_functionality):
     # can be reduced without issue.
     self.Adquisit_Timer = QTimer()
     self.Adquisit_Timer.setInterval(10) # ISSUE here, works with 5 but unstable.
+    #self.Adquisit_Timer.setInterval(20)
     self.Adquisit_Timer.timeout.connect(Capture_Data_Avg)
 
     #For Calibration Routine

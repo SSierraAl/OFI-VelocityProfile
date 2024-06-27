@@ -35,6 +35,7 @@ class WorkerDAQ(QObject):
         # Number of files
         self.fileSave=fileSave
         self.running = True
+        print("INFO: DAQ: new workerDAQ created and started")
 
 
     @Slot()
@@ -51,16 +52,17 @@ class WorkerDAQ(QObject):
 
             while self.running:
                 try:
+                    #print("DEBUG: workerDAQ retrieving samples")
                     reader.read_many_sample(self.DAQ_Data, number_of_samples_per_channel=self.number_of_samples, timeout=10)
                     self.completeddaq.emit(self.DAQ_Data)  # Emitting data read from DAQ
                 except:
+                    print("ERROR: workerDAQ failed to retrieve samples")
                     pass
 
     def stop(self):
         self.running = False 
-
-# creation of the Class DAQData, an object linked to the worker and the master class of the thread
         
+# creation of the Class DAQData, an object linked to the worker and the master class of the thread
 class DAQData(QObject):
     # Creation of the requested thread of the worker
     workDAQ_requested = Signal(int)
