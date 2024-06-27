@@ -66,8 +66,9 @@ def scan_all_edges(main_window, start_coordinates, count):
         edge_scan(main_window, 'x', start_coordinates)
     elif count == 1:
         edge_scan(main_window, '-x', start_coordinates)
-    if count == 2:
-        edge_scan(main_window, 'y', start_coordinates)
-    elif count == 3:
-        edge_scan(main_window, '-y', start_coordinates)
+    # NOTE: temporary disable as y not correctly implemented yet
+    # if count == 2:
+    #     edge_scan(main_window, 'y', start_coordinates)
+    # elif count == 3:
+    #     edge_scan(main_window, '-y', start_coordinates)
     

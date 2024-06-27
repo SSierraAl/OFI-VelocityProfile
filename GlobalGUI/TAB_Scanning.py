@@ -138,35 +138,38 @@ class Scan_functions:
         print("INFO: Flow Velocity Profile grid reset for new scan")
 
     # Stop Zaber in Y orientation
-    def Stop_z1(self):
+    def stop_zaber(self, zaber):
         self.main_window.Pixel_Interval.stop()
         self.main_window.Pixel_Interval_X.stop()
         self.main_window.Adquisit_Timer.stop()
         with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-            connection.generic_command("stop", 1, 0, True, 50)
+            connection.generic_command("stop", zaber, 0, True, 50)
 
     # Stop Zaber in X orientation
+    # Function for using the buttons properly
+    def Stop_z1(self):
+        self.stop_zaber(1)
+
+    # Function for using the buttons properly
     def Stop_z2(self):
-        self.main_window.Pixel_Interval.stop()
-        self.main_window.Pixel_Interval_X.stop()
-        self.main_window.Adquisit_Timer.stop()
-        with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-            connection.generic_command("stop", 2, 0, True, 50)
+        self.stop_zaber(2)        
             
-    def move_to_position(self, Zab, position):
+    # NOTE: there is no zaber 3 in this setup, at the moment. copy function above otherwise.
+            
+    def move_to_position(self, zaber, position):
         with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
             device_list = connection.detect_devices()
-            print(f"INFO: Moving Zaber {Zab} to position {position} ")
+            print(f"INFO: Moving Zaber {zaber} to position {position} ")
             
             # UNIT CONVERSION: position = data x (Micropstep Size)
-            # data = position / microstep size
+            # data to zaber = position / microstep size
             position_absolute = int(position / (0.047625)) #* 10**(-6))
-            response = connection.generic_command(f"move abs {position_absolute}", 1, 0, True, 50)
+            response = connection.generic_command(f"move abs {position_absolute}", zaber, 0, True, 50)
             #print(response)
             
-            actual_status = connection.generic_command("get motion.busy", 1, 0, True, 500)
+            actual_status = connection.generic_command("get motion.busy", zaber, 0, True, 500)
             while actual_status.status == 'BUSY':
-                actual_status = connection.generic_command("get motion.busy", 1, 0, True, 500)
+                actual_status = connection.generic_command("get motion.busy", zaber, 0, True, 500)
             
             # device_list[Zab].move_absolute(position, Units.LENGTH_MICROMETRES)
 
@@ -177,7 +180,7 @@ class Scan_functions:
             return_value = connection.generic_command("get pos", Zab, 0, True, 500)
             current_position_absolute = float(return_value.data) #NOTE: .data contains the absolute position
             # Unit conversion: position = data × (Microstep Size)
-            current_position_um = current_position_absolute * (0.047625 * 10**(-6))
+            current_position_um = current_position_absolute * (0.047625) #* 10**(-6))
             print(current_position_um)
             
             #act_pos=device_list[Zab].get_position(Units.LENGTH_MICROMETRES)
@@ -188,7 +191,7 @@ class Scan_functions:
         Calculates time it takes to travel along entire distance and stops
         the zaber when this time, and thus distance, have passed.
         """
-        print("INFO: starting continuous movement X")
+        print("INFO: starting continuous movement X function")
         # There should be some way to optimize this code with less lines, but it works at the moment. It is easiest to keep the override and manual things separate, to make sure there is
         # no weird behaviour with other code.
         
@@ -206,35 +209,39 @@ class Scan_functions:
             self.main_window.time_timer_scan=abs((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
        
         
-        print(f"Speed settings: {self.main_window.speed} {float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())}, {self.main_window.speed_override}")
-        print("INFO Scan settings:")
-        print(f"{self.main_window.distance}, {self.main_window.time_to_travel}, {self.main_window.cell_size},{self.main_window.time_timer_scan}")
+        print(f"INFO: Speed settings: {self.main_window.speed} {float(self.main_window.ui.load_pages.lineEdit_speed_ums.text())}, {self.main_window.speed_override}")
+        print(f"INFO:  Scan settings: distance:{self.main_window.distance}; time to travel:{self.main_window.time_to_travel}; cell size: {self.main_window.cell_size}; time timer scan:{self.main_window.time_timer_scan}")
+        #print(f"{self.main_window.distance}, {self.main_window.time_to_travel}, {self.main_window.cell_size},{self.main_window.time_timer_scan}")
 
         print("INFO: attempting Zaber move constant speed")
         try:
             if self.main_window.edge_scan_mode is False:
-                print (f"Manual speed setting: {self.main_window.speed}")
+                print (f"Manual speed setting: {self.main_window.speed}") #TODO: verify this line
                 # UNIT CONVERSION: velocity  = data × (Microstep Size) / (1.6384 s)
+                
                 # data = velocity / (Microstep Size) * (1.6384 s)
-                speed_absolute = self.main_window.speed / (0.047625 * 10**(-6)) * 1.6384
-                print(speed_absolute)
-                #speed_absolute = self.main_window.speed * (0.047625 * 10**(-6)) / 1.6384
+                speed_absolute = int(self.main_window.speed / (0.047625) * 1.6384)
+                print(f"INFO: absolute speed setting: {speed_absolute}")
+
+                
+                print("INFO: Sending Zaber move command")
                 with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-                    connection.generic_command(f"move vel {speed_absolute}]", 1, 0, True, 500)    
-                    #connection.generic_command("move vel 500", 1, 0, True, 500)
+                    connection.generic_command(f"move vel {speed_absolute}", 1, 0, True, 500)    
+                    # NOTE: generic command with old binary protocol:
                     # connection.generic_command(1, .MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
             else:
                 print (f"Algorithm Override speed setting: {self.main_window.speed_override}")
                 
                 # UNIT CONVERSION: velocity = data × (Microstep Size) / (1.6384 s)
-                override_speed_absolute = self.main_window.speed_override / (0.047625 * 10**(-6)) * 1.6384
-                print(override_speed_absolute)
-                #speed_absolute = self.main_window.speed_override * (0.047625 * 10^(-6)) / 1.6384
-                # NOTE: long calculation in constant speed setting is required to actually reach the desired X2 position, otherwise it stops earlier.
+                override_speed_absolute = int(self.main_window.speed_override / (0.047625) * 1.6384)
+                print(f"INFO: absolute speed setting: {override_speed_absolute}")
+                
+                print("INFO: Sending Zaber move command")
                 with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-                    connection.generic_command(f"move vel {override_speed_absolute}]", 1, 0, True, 500)
+                    response = connection.generic_command(f"move vel {override_speed_absolute}", 1, 0, True, 500)
+                    print(response)
                     #connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed_override/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
-            print("INFO: Zaber move command started")
+            #print("INFO: Zaber move command sent")
         except:
             print("ERROR: Zaber move command failed")
             self.start_continuous_movement_x() # retry
@@ -255,11 +262,11 @@ class Scan_functions:
         current_position = self.get_current_position(Zab)
         print(f"INFO: Check position Zaber {Zab}: {current_position}")
         if abs(current_position - reference_Zab) < 10:
-            print("STATUS: final position reached")
+            print("STATUS: position reached")
             self.start_continuous_movement_x()
         else:
             print("STATUS: continue movement")
-            QTimer.singleShot(500, self.main_window.check_position_and_start_X(Zab,reference_Zab))
+            QTimer.singleShot(500, self.check_position_and_start_X(Zab,reference_Zab))
 
     # Y-direction-scanning
     def start_continuous_movement_y(self):
@@ -368,8 +375,8 @@ class Scan_functions:
 
         # This is also the same
         # Move first to (X1,Y1)
-        self.move_to_position(0,self.main_window.Pos_Y1_Scan)
-        self.move_to_position(2,self.main_window.Pos_X1_Scan)
+        self.move_to_position(1,self.main_window.Pos_X1_Scan)
+        self.move_to_position(2,self.main_window.Pos_Y1_Scan)
         
         # Debug message if DAQ thread already exists
         try:
@@ -387,9 +394,9 @@ class Scan_functions:
         # Start scan
         # TODO: combine check_position_and_start into one single function with axis argument too
         if axis == 'x':
-            self.check_position_and_start_X(2,self.main_window.Pos_X1_Scan) #combine this
+            self.check_position_and_start_X(1,self.main_window.Pos_X1_Scan) #combine this
         elif axis == 'y':
-            self.check_position_and_start(0,self.main_window.Pos_Y1_Scan)
+            self.check_position_and_start(2,self.main_window.Pos_Y1_Scan)
         else:
             # PLACEHOLDER for adding Z axis if desired someday.
             print("Invalid axis argument")
@@ -419,9 +426,9 @@ class Scan_functions:
         self.main_window.current_row=0
         self.main_window.New_Color= [255,255,255] # [R,G,B] => WHITE
         # Move first to (X1,Y1)
-        self.move_to_position(2,self.main_window.Pos_X1_Scan)
-        self.move_to_position(0,self.main_window.Pos_Y1_Scan)
-        self.check_position_and_start(0,self.main_window.Pos_Y1_Scan)
+        self.move_to_position(1,self.main_window.Pos_X1_Scan)
+        self.move_to_position(2,self.main_window.Pos_Y1_Scan)
+        self.check_position_and_start(2,self.main_window.Pos_Y1_Scan)
 
     def Change_Pixel_DAQ_X(self):
         
@@ -432,7 +439,7 @@ class Scan_functions:
         if ((axis == 'x' and self.main_window.counter_Data_per_Pixel >= (self.main_window.g_W))
             or (axis == 'y' and self.main_window.counter_Data_per_Pixel >= (self.main_window.g_H))):
             self.main_window.counter_Data_per_Pixel=0
-            self.Stop_z2() # Stop the movement
+            self.stop_zaber(1) # Stop the movement
             actual_pos=(self.main_window.Pos_Y1_Scan+(((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.g_H)*self.main_window.counter_Step_Zaber_X))
             #Save Avg spectrum for each row
             self.main_window.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
@@ -466,9 +473,9 @@ class Scan_functions:
                 except:
                     print("No threadDAQ exists")
             else:
-                self.move_to_position(0,new_x_pos)
-                self.move_to_position(2,self.main_window.Pos_X1_Scan)
-                self.check_position_and_start_X(2,self.main_window.Pos_X1_Scan)
+                self.move_to_position(2,new_x_pos)
+                self.move_to_position(1,self.main_window.Pos_X1_Scan)
+                self.check_position_and_start_X(1,self.main_window.Pos_X1_Scan)
 
         # End of line not reached:
         else:
@@ -528,8 +535,6 @@ class Scan_functions:
             if self.main_window.simulation_counter == 20:
                 self.main_window.simulation_counter = 0
                 moment = 70000
-            
-            
 
             # Reset count data average and vector.
             self.main_window.Counter_DAQ_samples=0
@@ -566,11 +571,11 @@ class Scan_functions:
                     if hasattr (self.main_window , 'threadDAQ'):
                         DAQ_Reader_Global.Stop_DAQ_algorithm()
                         
-                    self.Stop_z2()
+                    self.stop_zaber(1)
                     self.main_window.Adquisit_Timer.stop()
                     
-                    x = self.main_window.scan_functions_instance.get_current_position(2) # Get current position of X Zaber
-                    y = self.main_window.scan_functions_instance.get_current_position(0) # Get current position of Y Zaber
+                    x = self.main_window.scan_functions_instance.get_current_position(1) # Get current position of X Zaber
+                    y = self.main_window.scan_functions_instance.get_current_position(2) # Get current position of Y Zaber
 
                     print(f"EDGE SCAN MODE: moment = {moment}")
                     print(f"EDGE SCAN MODE: threshold = {self.main_window.detect_edge_threshold}")
@@ -647,7 +652,7 @@ def Set_Scanning_Tab(self, scan_functionality):
         if self.counter_Data_per_Pixel >= (self.g_H):
             self.counter_Data_per_Pixel=0
             #Stop the movement
-            scan_functionality.Stop_z1()
+            scan_functionality.stop_zaber(2)
             #Reset the position
             self.counter_Step_Zaber_X+=1
             #Move to te next X position
@@ -660,9 +665,9 @@ def Set_Scanning_Tab(self, scan_functionality):
                 print('------  Scan finished --------')
                 self.Adquisit_Timer.stop()
             else:
-                scan_functionality.move_to_position(2,new_x_pos)
-                scan_functionality.move_to_position(0,self.Pos_Y1_Scan)
-                scan_functionality.check_position_and_start(0,self.Pos_Y1_Scan)
+                scan_functionality.move_to_position(1,new_x_pos)
+                scan_functionality.move_to_position(2,self.Pos_Y1_Scan)
+                scan_functionality.check_position_and_start(2,self.Pos_Y1_Scan)
         else:
             #AVG FFT
             self.dataAmp_Avg=(self.Freq_Data.mean(axis=1))
