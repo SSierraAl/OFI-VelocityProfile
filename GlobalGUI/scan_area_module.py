@@ -27,9 +27,10 @@ def edge_scan(main_window, direction, start_coordinates):
         #main_window.Pos_X2_Scan_override = float(49800) # end of Zaber with small margin
         main_window.Pos_Y1_Scan_override = float(start_coordinates[1]) # y of X,Y tuple
         main_window.Pos_Y2_Scan_override = float(start_coordinates[1]+(2*main_window.cell_size_override)) #WARNING: needs 2 rows (2 x cell size), crashes otherwise.
-    
+        
         # Start scan
-        main_window.scan_functions_instance.Scan_Continuous(axis = 'x')
+        main_window.axis = 'x'
+        main_window.scan_functions_instance.Scan_Continuous()
     
     elif direction == '-x':
         # Go in negative X direction
@@ -44,7 +45,8 @@ def edge_scan(main_window, direction, start_coordinates):
         main_window.Pos_Y2_Scan_override = float(start_coordinates[1]+(2*main_window.cell_size_override)) #WARNING: needs 2 rows (2 x cell size), crashes otherwise.
         
         # Start scan
-        main_window.scan_functions_instance.Scan_Continuous(axis = 'x')
+        main_window.axis = 'x'
+        main_window.scan_functions_instance.Scan_Continuous()
         
     elif direction == 'y':
         # Go in positive X direction
@@ -59,7 +61,24 @@ def edge_scan(main_window, direction, start_coordinates):
         main_window.Pos_Y2_Scan_override = float(49800) # end of Zaber with small margin
     
         # Start scan
-        main_window.scan_functions_instance.Scan_Continuous(axis = 'y')
+        main_window.axis = 'y'
+        main_window.scan_functions_instance.Scan_Continuous()
+        
+    elif direction == '-y':
+        # Go in positive X direction
+        # Start: start coordinate
+        # End: maximum range of Zaber setup
+        # Set override settings
+        main_window.speed_override  = float(-400)
+        print(f"Starting algorithm edge scan with starting position {start_coordinates[0]}, {start_coordinates[1]}")
+        main_window.Pos_X1_Scan_override = float(start_coordinates[0]) # x part of X,Y tuple
+        main_window.Pos_X2_Scan_override = float(start_coordinates[0]+(2*main_window.cell_size_override)) #WARNING: needs 2 rows (2 x cell size), crashes otherwise.
+        main_window.Pos_Y1_Scan_override = float(start_coordinates[1]) # y of X,Y tuple
+        main_window.Pos_Y2_Scan_override = float(1000) # end of Zaber with small margin
+    
+        # Start scan
+        main_window.axis = 'y'
+        main_window.scan_functions_instance.Scan_Continuous()
         
 def scan_all_edges(main_window, start_coordinates, count):
     if count == 0:
@@ -67,8 +86,7 @@ def scan_all_edges(main_window, start_coordinates, count):
     elif count == 1:
         edge_scan(main_window, '-x', start_coordinates)
     # NOTE: temporary disable as y not correctly implemented yet
-    # if count == 2:
-    #     edge_scan(main_window, 'y', start_coordinates)
-    # elif count == 3:
-    #     edge_scan(main_window, '-y', start_coordinates)
-    
+    if count == 2:
+        edge_scan(main_window, 'y', start_coordinates)
+    elif count == 3:
+        edge_scan(main_window, '-y', start_coordinates)

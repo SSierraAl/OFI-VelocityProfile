@@ -112,8 +112,8 @@ class Scan_functions:
         
         # Button connections
         self.main_window.ui.load_pages.Calib_Reset_Scan_but.clicked.connect(self.reset_refresh_scan)
-        self.main_window.ui.load_pages.Stop_Y_but.clicked.connect(self.Stop_z1)
-        self.main_window.ui.load_pages.Stop_x_but.clicked.connect(self.Stop_z2) # Button for stopping X
+        self.main_window.ui.load_pages.Stop_Y_but.clicked.connect(self.Stop_z2)
+        self.main_window.ui.load_pages.Stop_x_but.clicked.connect(self.Stop_z1) # Button for stopping X
         self.main_window.ui.load_pages.continuous_scanX_but.clicked.connect(self.start_manual_scan)
         
         # changed for testing new scan area functions:
@@ -216,7 +216,7 @@ class Scan_functions:
         print("INFO: attempting Zaber move constant speed")
         try:
             if self.main_window.edge_scan_mode is False:
-                print (f"Manual speed setting: {self.main_window.speed}") #TODO: verify this line
+                print (f"Manual speed setting: {self.main_window.speed}")
                 # UNIT CONVERSION: velocity  = data × (Microstep Size) / (1.6384 s)
                 
                 # data = velocity / (Microstep Size) * (1.6384 s)
@@ -236,12 +236,19 @@ class Scan_functions:
                 override_speed_absolute = int(self.main_window.speed_override / (0.047625) * 1.6384)
                 print(f"INFO: absolute speed setting: {override_speed_absolute}")
                 
-                print("INFO: Sending Zaber move command")
-                with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-                    response = connection.generic_command(f"move vel {override_speed_absolute}", 1, 0, True, 500)
-                    print(response)
-                    #connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int((((self.main_window.speed_override/1.55)/10)*1.6384/0.047625)))#/0.047625)) #speed in um/s
-            #print("INFO: Zaber move command sent")
+                print(f"INFO: Sending Zaber move command in {self.main_window.axis} direction")
+                if self.main_window.axis == 'x':
+                    with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+                        response = connection.generic_command(f"move vel {override_speed_absolute}", 1, 0, True, 500)
+                        print(response)
+                
+                elif self.main_window.axis == 'y':
+                    with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+                        response = connection.generic_command(f"move vel {override_speed_absolute}", 2, 0, True, 500)
+                        print(response)
+                
+                else:
+                    print("ERROR: invalid axis argument")
         except:
             print("ERROR: Zaber move command failed")
             self.start_continuous_movement_x() # retry
@@ -279,19 +286,27 @@ class Scan_functions:
         self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
         self.main_window.time_timer_scan=((self.main_window.time_to_travel/(self.main_window.distance/self.main_window.cell_size)))
 
-        with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
-            connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int(self.main_window.speed))
+        # with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+        #     connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int(self.main_window.speed))
 
+        # UNIT CONVERSION: velocity = data × (Microstep Size) / (1.6384 s)
+        override_speed_absolute = int(self.main_window.speed_override / (0.047625) * 1.6384)
+        print(f"INFO: absolute speed setting: {override_speed_absolute}")
+        print("INFO: Sending Zaber move command")
+        with Connection.open_serial_port(self.main_window.Zaber_COM) as connection:
+            response = connection.generic_command(f"move vel {override_speed_absolute}", 1, 0, True, 500)
+            print(response)
+        
         self.main_window.Pixel_Interval.setInterval(self.main_window.time_timer_scan)
         self.main_window.Pixel_Interval.start()
         self.main_window.Adquisit_Timer.start()
         
     #Initial_Move
-    def check_position_and_start(self, Zab, reference_Zab):
-        if abs(self.get_current_position(Zab) - reference_Zab) < 10:
-            self.start_continuous_movement_y()
-        else:
-            QTimer.singleShot(500, self.main_window.check_position_and_start(Zab,reference_Zab))
+    # def check_position_and_start(self, Zab, reference_Zab):
+    #     if abs(self.get_current_position(Zab) - reference_Zab) < 10:
+    #         self.start_continuous_movement_y()
+    #     else:
+    #         QTimer.singleShot(500, self.main_window.check_position_and_start(Zab,reference_Zab))
 
         #Color pixel adjustment
 
@@ -323,9 +338,10 @@ class Scan_functions:
         """
         self.main_window.override_user_settings = False
         self.main_window.edge_scan_mode = False
-        self.Scan_Continuous(axis='x')
+        self.main_window.axis = 'x'
+        self.Scan_Continuous()
 
-    def Scan_Continuous(self, axis):
+    def Scan_Continuous(self):
         # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
         if hasattr(self.main_window,'color_grid_widget'):
             self.reset_refresh_scan()
@@ -393,53 +409,57 @@ class Scan_functions:
         # this is different for x and y
         # Start scan
         # TODO: combine check_position_and_start into one single function with axis argument too
-        if axis == 'x':
+        if self.main_window.axis == 'x':
             self.check_position_and_start_X(1,self.main_window.Pos_X1_Scan)
-        elif axis == 'y':
-            self.check_position_and_start(2,self.main_window.Pos_Y1_Scan)
+        elif self.main_window.axis == 'y':
+            self.check_position_and_start_X(2,self.main_window.Pos_Y1_Scan)
         else:
             # PLACEHOLDER for adding Z axis if desired someday.
             print("ERROR: invalid axis argument")
 
-    def Scan_Continuos_Y(self):
-        # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
-        if hasattr(self,'color_grid_widget'):
-            self.reset_refresh_scan()
+    # def Scan_Continuos_Y(self):
+    #     # Reset grid so there won't be 2 grids if there's already a grid with previous measurements
+    #     if hasattr(self,'color_grid_widget'):
+    #         self.reset_refresh_scan()
             
-        #Update GUI Information
-        self.main_window.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()) / ((1.6381 / 1.9843))
-        self.main_window.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
-        self.main_window.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
-        self.main_window.Pos_X1_Scan = float(self.main_window.ui.load_pages.lineEdit_x1_scan.text())
-        self.main_window.Pos_X2_Scan = float(self.main_window.ui.load_pages.lineEdit_x2_scan.text())
-        self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
-        #Update everything
-        self.main_window.g_W=abs(int((self.main_window.Pos_X2_Scan-self.main_window.Pos_X1_Scan)/self.main_window.cell_size)) #can't be negative
-        self.main_window.g_H=abs(int((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.cell_size))
-        #Create Graph
-        self.main_window.color_grid_widget = ColorGrid(self.main_window.g_H,self.main_window.g_W,self.main_window.cell_size)
-        self.main_window.ui.load_pages.Layout_table_Scan.addWidget(self.main_window.color_grid_widget)
-        # Variables_Initialization
-        self.main_window.counter_Data_per_Pixel=0 # used for determining current pixel
-        self.main_window.counter_Step_Zaber_X=0
-        self.main_window.current_col=0
-        self.main_window.current_row=0
-        self.main_window.New_Color= [255,255,255] # [R,G,B] => WHITE
-        # Move first to (X1,Y1)
-        self.move_to_position(1,self.main_window.Pos_X1_Scan)
-        self.move_to_position(2,self.main_window.Pos_Y1_Scan)
-        self.check_position_and_start(2,self.main_window.Pos_Y1_Scan)
+    #     #Update GUI Information
+    #     self.main_window.speed = float(self.main_window.ui.load_pages.lineEdit_speed_ums.text()) / ((1.6381 / 1.9843))
+    #     self.main_window.Pos_Y1_Scan = float(self.main_window.ui.load_pages.lineEdit_y1_scan.text())
+    #     self.main_window.Pos_Y2_Scan = float(self.main_window.ui.load_pages.lineEdit_y2_scan.text())
+    #     self.main_window.Pos_X1_Scan = float(self.main_window.ui.load_pages.lineEdit_x1_scan.text())
+    #     self.main_window.Pos_X2_Scan = float(self.main_window.ui.load_pages.lineEdit_x2_scan.text())
+    #     self.main_window.cell_size = int(self.main_window.ui.load_pages.lineEdit_Pixel_size.text())
+    #     #Update everything
+    #     self.main_window.g_W=abs(int((self.main_window.Pos_X2_Scan-self.main_window.Pos_X1_Scan)/self.main_window.cell_size)) #can't be negative
+    #     self.main_window.g_H=abs(int((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.cell_size))
+    #     #Create Graph
+    #     self.main_window.color_grid_widget = ColorGrid(self.main_window.g_H,self.main_window.g_W,self.main_window.cell_size)
+    #     self.main_window.ui.load_pages.Layout_table_Scan.addWidget(self.main_window.color_grid_widget)
+    #     # Variables_Initialization
+    #     self.main_window.counter_Data_per_Pixel=0 # used for determining current pixel
+    #     self.main_window.counter_Step_Zaber_X=0
+    #     self.main_window.current_col=0
+    #     self.main_window.current_row=0
+    #     self.main_window.New_Color= [255,255,255] # [R,G,B] => WHITE
+    #     # Move first to (X1,Y1)
+    #     self.move_to_position(1,self.main_window.Pos_X1_Scan)
+    #     self.move_to_position(2,self.main_window.Pos_Y1_Scan)
+    #     self.check_position_and_start_X(2,self.main_window.Pos_Y1_Scan) # used to be the Y version
 
     def Change_Pixel_DAQ_X(self):
         
         #Stop condition:
         #Reach end of a line
         # TODO: create new main window variable axis and change it accordingly.
-        axis = 'x'
-        if ((axis == 'x' and self.main_window.counter_Data_per_Pixel >= (self.main_window.g_W))
-            or (axis == 'y' and self.main_window.counter_Data_per_Pixel >= (self.main_window.g_H))):
+        
+        if ((self.main_window.axis == 'x' and self.main_window.counter_Data_per_Pixel >= self.main_window.g_W)
+            or (self.main_window.axis == 'y' and self.main_window.counter_Data_per_Pixel >= self.main_window.g_H)):
             self.main_window.counter_Data_per_Pixel=0
-            self.stop_zaber(1) # Stop the movement
+            
+            # Stop the movement
+            self.stop_zaber(1)
+            self.stop_zaber(2)
+            
             actual_pos=(self.main_window.Pos_Y1_Scan+(((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.g_H)*self.main_window.counter_Step_Zaber_X))
             #Save Avg spectrum for each row
             self.main_window.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
@@ -447,13 +467,23 @@ class Scan_functions:
         
             # Reset positions
             self.main_window.counter_Step_Zaber_X+=1
-            new_x_pos=(self.main_window.Pos_Y1_Scan
-                        +(((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.g_H)
-                        *self.main_window.counter_Step_Zaber_X))
+            
+            if self.main_window.axis == 'x':
+                new_x_pos=  (self.main_window.Pos_Y1_Scan
+                            +(((self.main_window.Pos_Y2_Scan-self.main_window.Pos_Y1_Scan)/self.main_window.g_H)
+                            *self.main_window.counter_Step_Zaber_X))
+            elif self.main_window.axis == 'y':
+                new_x_pos=  (self.main_window.Pos_X1_Scan
+                            +(((self.main_window.Pos_X2_Scan-self.main_window.Pos_X1_Scan)/self.main_window.g_W)
+                            *self.main_window.counter_Step_Zaber_X))
+            else:
+                print("ERROR: invalid axis: {self.main_window.axis}")
             
             # if final row has been finished, meaning all rows have been scanned
             # OR if edge_scan_mode, because it only needs to scan 1 row.
-            if new_x_pos>=self.main_window.Pos_Y2_Scan or self.main_window.edge_scan_mode is True: 
+            if ((self.main_window.axis == 'x' and new_x_pos>=self.main_window.Pos_Y2_Scan) 
+                or (self.main_window.axis == 'y' and new_x_pos>=self.main_window.Pos_X2_Scan)
+                or self.main_window.edge_scan_mode is True):
                 if self.main_window.edge_scan_mode is True:
                     print("EDGE SCAN MODE: No edge found")
                                 
@@ -471,12 +501,18 @@ class Scan_functions:
                 try: 
                     print(self.main_window.threadDAQ)
                 except:
-                    print("No threadDAQ exists")
+                    print("INFO: DAQ: No threadDAQ exists")
             else:
-                self.move_to_position(2,new_x_pos)
-                self.move_to_position(1,self.main_window.Pos_X1_Scan)
-                self.check_position_and_start_X(1,self.main_window.Pos_X1_Scan)
-
+                if self.main_window.axis == 'x':
+                    self.move_to_position(1,self.main_window.Pos_X1_Scan)
+                    self.move_to_position(2,new_x_pos)
+                    self.check_position_and_start_X(1,self.main_window.Pos_X1_Scan)
+                elif self.main_window.axis == 'y':
+                    self.move_to_position(1,new_x_pos)
+                    self.move_to_position(2,self.Pos_Y1_Scan)
+                    self.check_position_and_start_X(2,self.Pos_Y1_Scan)
+                else:
+                    print("ERROR: invalid axis: {self.main_window.axis}")
         # End of line not reached:
         else:
             #Deviation estimation, vectorized by row by pixel
@@ -547,9 +583,13 @@ class Scan_functions:
             
             # Apply new color to pixel in flow velocity profile view
             # and save measured momentum to CSV file            
-            self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Data_per_Pixel,self.main_window.counter_Step_Zaber_X, self.main_window.New_Color)
-            self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
-            
+            if self.main_window.axis == 'x':
+                self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Data_per_Pixel,self.main_window.counter_Step_Zaber_X, self.main_window.New_Color)
+                self.main_window.color_grid_widget.updateCSV(self.main_window.counter_Step_Zaber_X-1,self.main_window.counter_Data_per_Pixel-1,(M1/M0),M0,M1)
+            elif self.main_window.axis == 'y':
+                self.main_window.color_grid_widget.changeCellColor(self.main_window.counter_Step_Zaber_X,self.main_window.counter_Data_per_Pixel, self.main_window.New_Color)
+            else:
+                print("ERROR: invalid axis: {self.main_window.axis}")
             # Add one to data taken for this pixel
             self.main_window.counter_Data_per_Pixel+=1
             
@@ -557,7 +597,8 @@ class Scan_functions:
             self.main_window.current_col= self.main_window.counter_Data_per_Pixel
 
             # Why increment with one if the max width has been exceeded?
-            if self.main_window.counter_Data_per_Pixel >= self.main_window.g_W: 
+            if (self.main_window.axis == 'x' and self.main_window.counter_Data_per_Pixel >= self.main_window.g_W
+                or self.main_window.axis == 'y' and self.main_window.counter_Data_per_Pixel >= self.main_window.g_H):
                 self.main_window.counter_Data_per_Pixel += 1
                 
             # if edge found
@@ -572,6 +613,8 @@ class Scan_functions:
                         DAQ_Reader_Global.Stop_DAQ_algorithm()
                         
                     self.stop_zaber(1)
+                    self.stop_zaber(2)
+                    
                     self.main_window.Adquisit_Timer.stop()
                     
                     x = self.main_window.scan_functions_instance.get_current_position(1) # Get current position of X Zaber
@@ -638,63 +681,64 @@ def Set_Scanning_Tab(self, scan_functionality):
     self.edge_coordinate_array = [tuple()]*4 # create list of tuples
     self.simulation_counter = 0 # delete later
     self.edge_scan_start_coordinates = (25000, 25000)
+    self.axis = 'x'
     #Graphic_Data_Update
-    def Change_Pixel_DAQ():
-        """Changes the pixels in Y direction
-        NOTE: this function is critical to the interface, when you remove it stops working entirely,
-        even the X direction measurements.
+    # def Change_Pixel_DAQ():
+    #     """Changes the pixels in Y direction
+    #     NOTE: this function is critical to the interface, when you remove it stops working entirely,
+    #     even the X direction measurements.
         
-        It contains some functions and initializes the variables required for scanning functionality
-        and Scan_functions class.
-        """
-        #Stop condition
-        #The final Y position is reach
-        if self.counter_Data_per_Pixel >= (self.g_H):
-            self.counter_Data_per_Pixel=0
-            #Stop the movement
-            scan_functionality.stop_zaber(2)
-            #Reset the position
-            self.counter_Step_Zaber_X+=1
-            #Move to te next X position
-            new_x_pos=(self.Pos_X1_Scan+(((self.Pos_X2_Scan-self.Pos_X1_Scan)/self.g_W)*self.counter_Step_Zaber_X))
-            if new_x_pos>=self.Pos_X2_Scan:
-                # Stop DAQ if it is running, causes crash otherwise
-                if hasattr (self, 'threadDAQ'):
-                    DAQ_Reader_Global.Stop_DAQ_algorithm() #self.main_window
+    #     It contains some functions and initializes the variables required for scanning functionality
+    #     and Scan_functions class.
+    #     """
+    #     #Stop condition
+    #     #The final Y position is reach
+    #     if self.counter_Data_per_Pixel >= (self.g_H):
+    #         self.counter_Data_per_Pixel=0
+    #         #Stop the movement
+    #         scan_functionality.stop_zaber(2)
+    #         #Reset the position
+    #         self.counter_Step_Zaber_X+=1
+    #         #Move to te next X position
+    #         new_x_pos=(self.Pos_X1_Scan+(((self.Pos_X2_Scan-self.Pos_X1_Scan)/self.g_W)*self.counter_Step_Zaber_X))
+    #         if new_x_pos>=self.Pos_X2_Scan:
+    #             # Stop DAQ if it is running, causes crash otherwise
+    #             if hasattr (self, 'threadDAQ'):
+    #                 DAQ_Reader_Global.Stop_DAQ_algorithm() #self.main_window
                     
-                print('------  Scan finished --------')
-                self.Adquisit_Timer.stop()
-            else:
-                scan_functionality.move_to_position(1,new_x_pos)
-                scan_functionality.move_to_position(2,self.Pos_Y1_Scan)
-                scan_functionality.check_position_and_start(2,self.Pos_Y1_Scan)
-        else:
-            #AVG FFT
-            self.dataAmp_Avg=(self.Freq_Data.mean(axis=1))
-            print('N Avg Samples')
-            print(self.Counter_DAQ_samples)
-            #PSD estimation
-            self.PSD_Avg_Moment=(self.dataAmp_Avg*self.dataAmp_Avg)*(2/(self.number_of_samples*self.Laser_Frequency))
-            #Experimental
-            M0 = np.sum(self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
-            M1 = np.sum(self.dataFreq * self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0]) / M0
-            print('AVG Moment')
-            colorcolor=int(M1/M0)
-            print(colorcolor)
-            newcolor=scan_functionality.interpolation_Color(colorcolor)
+    #             print('------  Scan finished --------')
+    #             self.Adquisit_Timer.stop()
+    #         else:
+    #             scan_functionality.move_to_position(1,new_x_pos)
+    #             scan_functionality.move_to_position(2,self.Pos_Y1_Scan)
+    #             scan_functionality.check_position_and_start_X(2,self.Pos_Y1_Scan)
+    #     else:
+    #         #AVG FFT
+    #         self.dataAmp_Avg=(self.Freq_Data.mean(axis=1))
+    #         print('N Avg Samples')
+    #         print(self.Counter_DAQ_samples)
+    #         #PSD estimation
+    #         self.PSD_Avg_Moment=(self.dataAmp_Avg*self.dataAmp_Avg)*(2/(self.number_of_samples*self.Laser_Frequency))
+    #         #Experimental
+    #         M0 = np.sum(self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0])
+    #         M1 = np.sum(self.dataFreq * self.PSD_Avg_Moment) #* (self.dataFreq[1] - self.dataFreq[0]) / M0
+    #         print('AVG Moment')
+    #         colorcolor=int(M1/M0)
+    #         print(colorcolor)
+    #         newcolor=scan_functionality.interpolation_Color(colorcolor)
 
-            print('end AVG Moment')
-            #Restart counter and variable
-            self.Counter_DAQ_samples=0
-            self.Freq_Data=pd.DataFrame()
-            self.New_Color=[0, newcolor, 0]
+    #         print('end AVG Moment')
+    #         #Restart counter and variable
+    #         self.Counter_DAQ_samples=0
+    #         self.Freq_Data=pd.DataFrame()
+    #         self.New_Color=[0, newcolor, 0]
 
-            self.color_grid_widget.changeCellColor(self.counter_Step_Zaber_X, self.counter_Data_per_Pixel, self.New_Color)
-            self.counter_Data_per_Pixel+=1
-            self.current_col= self.counter_Data_per_Pixel
+    #         self.color_grid_widget.changeCellColor(self.counter_Step_Zaber_X, self.counter_Data_per_Pixel, self.New_Color)
+    #         self.counter_Data_per_Pixel+=1
+    #         self.current_col= self.counter_Data_per_Pixel
 
-            if self.counter_Data_per_Pixel >= self.g_H:
-                self.counter_Data_per_Pixel += 1
+    #         if self.counter_Data_per_Pixel >= self.g_H:
+    #             self.counter_Data_per_Pixel += 1
 
     def Capture_Data_Avg():
         
@@ -800,7 +844,7 @@ def Set_Scanning_Tab(self, scan_functionality):
     self.Pixel_Interval_X = QTimer()
     self.Pixel_Interval_X.timeout.connect(scan_functionality.Change_Pixel_DAQ_X)
     self.Pixel_Interval = QTimer()
-    self.Pixel_Interval.timeout.connect(Change_Pixel_DAQ)
+    #self.Pixel_Interval.timeout.connect(Change_Pixel_DAQ_x)
 
     # Continuous Sweep Routine
     # Configure timer that determines sampling frequency
