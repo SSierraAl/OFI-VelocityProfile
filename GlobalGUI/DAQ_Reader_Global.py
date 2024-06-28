@@ -89,9 +89,11 @@ def Init_DAQ_Connection_algorithm():
 # Function placed outside of Set_DAQ_Functions() so it can be used by TAB_Scanning.py
 def Stop_DAQ_algorithm():
     '''Stops the DAQ, so it can be started again by the next scan'''
-    #global main_window
-    main_window.threadDAQ.deleteDAQ()
-    delattr(main_window, "threadDAQ") #WARNING: This is required, as the attribute is not deleted otherwise
-    # In TAB_Scanning, scan_continous_x, it is checked if there is an attribute named ThreadDAQ to check if a new thread can be started
-    # Without deleting the attribute, it still shows that the attribute exists, even though the .deleteDAQ() function has been performed.
-    print("------ DAQ Reading Mode: Off -------")
+    try:
+        main_window.threadDAQ.deleteDAQ()
+        delattr(main_window, "threadDAQ") #WARNING: This is required, as the attribute is not deleted otherwise
+        # In TAB_Scanning, scan_continous_x, it is checked if there is an attribute named ThreadDAQ to check if a new thread can be started
+        # Without deleting the attribute, it still shows that the attribute exists, even though the .deleteDAQ() function has been performed.
+        print("------ DAQ Reading Mode: Off -------")
+    except:
+        print("INFO: DAQ is already stopped")

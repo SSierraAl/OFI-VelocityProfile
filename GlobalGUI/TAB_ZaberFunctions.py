@@ -68,13 +68,9 @@ def InitializeZaber(self):
 
                 with Connection.open_serial_port(self.Zaber_COM) as connection:
                     device_list = connection.detect_devices()
-                    print("Check 1")
                     device_list[1].home()
-                    print("Check 2")
                     device_list[2].home()
-                    print("Check 3")
                     device_list[0].home()
-                    print("Check 4")
 
                 #Move Zaber to previous position
                 with open('zaberset1.pkl', 'rb') as file:
