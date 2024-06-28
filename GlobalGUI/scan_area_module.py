@@ -19,6 +19,7 @@ def edge_scan(main_window, direction, start_coordinates):
         # Go in positive X direction
         # Start: start coordinate
         # End: maximum range of Zaber setup
+        
         # Set override settings
         main_window.speed_override  = float(400)
         main_window.Pos_X1_Scan_override = float(start_coordinates[0]) # x part of X,Y tuple
@@ -35,6 +36,7 @@ def edge_scan(main_window, direction, start_coordinates):
         # Go in negative X direction
         # Start: start coordinate
         # End: maximum range of Zaber setup
+        
         # Set override settings
         main_window.speed_override  = float(-400)
         main_window.Pos_X1_Scan_override = float(start_coordinates[0]) # x part of X,Y tuple
@@ -49,6 +51,7 @@ def edge_scan(main_window, direction, start_coordinates):
         # Go in positive X direction
         # Start: start coordinate
         # End: maximum range of Zaber setup
+        
         # Set override settings
         main_window.speed_override  = float(400)
         main_window.Pos_X1_Scan_override = float(start_coordinates[0]) # x part of X,Y tuple
@@ -64,6 +67,7 @@ def edge_scan(main_window, direction, start_coordinates):
         # Go in positive X direction
         # Start: start coordinate
         # End: maximum range of Zaber setup
+        
         # Set override settings
         main_window.speed_override  = float(-400)
         main_window.Pos_X1_Scan_override = float(start_coordinates[0]) # x part of X,Y tuple
@@ -90,7 +94,6 @@ def scan_all_edges(main_window, start_coordinates, count):
         edge_scan(main_window, 'x', start_coordinates)
     elif count == 1:
         edge_scan(main_window, '-x', start_coordinates)
-    # NOTE: temporary disable as y not correctly implemented yet
     elif count == 2:
         edge_scan(main_window, 'y', start_coordinates)
     elif count == 3:
