@@ -29,7 +29,6 @@ from TAB_Home_Read import *
 from DAQ_Reader_Global import *
 from TAB_Scanning import *
 
-
 import pyqtgraph as pg
 import sys
 from PySide6.QtCore import QTimer
@@ -40,8 +39,6 @@ import subprocess as sp
 # MAIN WINDOW
 # ///////////////////////////////////////////////////////////////
 class MainWindow(QMainWindow):
-    """ Class for setting up window GUI interface
-    """
     def __init__(self):
         super().__init__()
 
@@ -68,7 +65,7 @@ class MainWindow(QMainWindow):
         # SET DAQ ACQUISIITON
         # ///////////////////////////////////////////////////////////////
         Set_DAQ_Functions(self)
-
+        
 
         # SET HOME TAB
         # ///////////////////////////////////////////////////////////////
@@ -76,13 +73,14 @@ class MainWindow(QMainWindow):
 
         # SET SCANNING TAB
         # ///////////////////////////////////////////////////////////////
-        self.scan_functions_instance = Scan_functions(self)
-        Set_Scanning_Tab(self, self.scan_functions_instance) #TODO: the scan_functions_instance of self can be used within the set_scanning_tab now, without having to pass it as an argument.
+        Set_Scanning_Tab(self)
+
 
         # ///////////////////////////////////////////////////////////////
         # SHOW MAIN WINDOW
         # ///////////////////////////////////////////////////////////////
         self.show()
+
     
 
 
@@ -101,19 +99,20 @@ class MainWindow(QMainWindow):
         # ///////////////////////////////////////////////////////////////
         
         # HOME BTN
-        if btn.objectName() == "btn_home": #display home page
+        if btn.objectName() == "btn_home":
             # Select Menu
             self.ui.left_menu.select_only_one(btn.objectName())
             MainFunctions.set_page(self, self.ui.load_pages.page_1)
 
 
-        # CALIBRATION BTN
+        # HOME BTN
         if btn.objectName() == "btn_search":
             # Select Menu
             self.ui.left_menu.select_only_one(btn.objectName())
             MainFunctions.set_page(self, self.ui.load_pages.page_calib)
 
-        # ZABER CONECTION BTN
+
+        # ZABER CONECTION
         # ///////////////////////////////////////////////////////////////
         if btn.objectName() == "btn_zaber":
             # Select Menu

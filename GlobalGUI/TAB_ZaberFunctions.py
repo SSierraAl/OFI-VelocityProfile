@@ -1,9 +1,6 @@
 import zaber_motion
 from zaber_motion import Units
-
-#from zaber_motion.binary import Connection,CommandCode
-from zaber_motion.ascii import Connection
-
+from zaber_motion.binary import Connection,CommandCode
 from random import randint
 import numpy as np
 import pyqtgraph as pg
@@ -12,53 +9,41 @@ from PySide6.QtCore import QTimer
 import time
 from scipy.signal import welch, get_window
 
-COM_port="COM8" # Port uses for serial communication with Zabers
+COM4="COM6"
 
 
 #---------- Init --------------#
 def InitializeZaber(self):
-    self.Zaber_COM=COM_port
+    self.Zaber_COM=COM4
     try:
         print("------- Zaber Initialization -------")
         with Connection.open_serial_port(self.Zaber_COM) as connection:
-            
-            #print("Check 1")
             device_list = connection.detect_devices()
-            #print("Check 1")
-            print("Found {} devices".format(len(device_list)))
-            #print("Check 2")
-            #self.ui.load_pages.z1_slider.setValue(float(device_list[0].get_position())*100/1039370)
-            #self.ui.load_pages.z1_data.setText(str((float(device_list[0].get_position()))*4.95/1039370))
-            # self.ui.load_pages.z1_cm.setChecked(True)
-            # self.ui.load_pages.z1_mm.setChecked(False)
-            # self.ui.load_pages.z1_um.setChecked(False)
-            # self.ui.load_pages.z1_Absolute.setChecked(True)
-            # self.ui.load_pages.z1_Relative.setChecked(False)
-            #print("Check 2")
+            self.ui.load_pages.z1_slider.setValue(float(device_list[0].get_position())*100/1039370)
+            self.ui.load_pages.z1_data.setText(str((float(device_list[0].get_position()))*4.95/1039370))
+            self.ui.load_pages.z1_cm.setChecked(True)
+            self.ui.load_pages.z1_mm.setChecked(False)
+            self.ui.load_pages.z1_um.setChecked(False)
+            self.ui.load_pages.z1_Absolute.setChecked(True)
+            self.ui.load_pages.z1_Relative.setChecked(False)
 
-            #self.ui.load_pages.z2_slider.setValue(float(device_list[2].get_position())*100/1039370)
-            #self.ui.load_pages.z2_data.setText(str((float(device_list[2].get_position()))*4.95/1039370))
-            
-            
-            # self.ui.load_pages.z2_cm.setChecked(True)
-            # self.ui.load_pages.z2_mm.setChecked(False)
-            # self.ui.load_pages.z2_um.setChecked(False)
-            # self.ui.load_pages.z2_Absolute.setChecked(True)
-            # self.ui.load_pages.z2_Relative.setChecked(False)
+            self.ui.load_pages.z2_slider.setValue(float(device_list[2].get_position())*100/1039370)
+            self.ui.load_pages.z2_data.setText(str((float(device_list[2].get_position()))*4.95/1039370))
+            self.ui.load_pages.z2_cm.setChecked(True)
+            self.ui.load_pages.z2_mm.setChecked(False)
+            self.ui.load_pages.z2_um.setChecked(False)
+            self.ui.load_pages.z2_Absolute.setChecked(True)
+            self.ui.load_pages.z2_Relative.setChecked(False)
 
-            #print("Check 2")
-            
-            #self.ui.load_pages.z3_slider.setValue(float(device_list[1].get_position())*100/1039370)
-            #self.ui.load_pages.z3_data.setText(str((float(device_list[1].get_position()))*4.95/1039370))
-            
-            
-            # self.ui.load_pages.z3_cm.setChecked(True)
-            # self.ui.load_pages.z3_mm.setChecked(False)
-            # self.ui.load_pages.z3_um.setChecked(False)
-            # self.ui.load_pages.z3_Absolute.setChecked(True)
-            # self.ui.load_pages.z3_Relative.setChecked(False)
-            #print("Check 2")
-            
+
+            self.ui.load_pages.z3_slider.setValue(float(device_list[1].get_position())*100/1039370)
+            self.ui.load_pages.z3_data.setText(str((float(device_list[1].get_position()))*4.95/1039370))
+            self.ui.load_pages.z3_cm.setChecked(True)
+            self.ui.load_pages.z3_mm.setChecked(False)
+            self.ui.load_pages.z3_um.setChecked(False)
+            self.ui.load_pages.z3_Absolute.setChecked(True)
+            self.ui.load_pages.z3_Relative.setChecked(False)
+
             def seb():
                 number=CheckDevices()
                 print("tenemos "+ str(number))
@@ -228,7 +213,7 @@ def InitializeZaber(self):
 
             #Constant speed     #######################################################
             def Stop_z1():
-                with Connection.open_serial_port(COM_port) as connection:
+                with Connection.open_serial_port(COM4) as connection:
                     response = connection.generic_command(1, CommandCode.STOP, 1)
                     device_list = connection.detect_devices()
                     pos=((float(device_list[0].get_position()))*4.95/1039370)
@@ -240,10 +225,7 @@ def InitializeZaber(self):
                     pickle.dump(NewLine, file)
 
             def Stop_z2():
-                """ This function stops the X movement of the Zaber setup
-                """
-                
-                with Connection.open_serial_port(COM_port) as connection:
+                with Connection.open_serial_port("COM4") as connection:
                     response = connection.generic_command(2, CommandCode.STOP, 1)
                     device_list = connection.detect_devices()
                     pos=((float(device_list[2].get_position()))*4.95/1039370)
@@ -255,7 +237,7 @@ def InitializeZaber(self):
                     pickle.dump(NewLine, file)
 
             def Stop_z3():
-                with Connection.open_serial_port(COM_port) as connection:
+                with Connection.open_serial_port("COM4") as connection:
                     response = connection.generic_command(3, CommandCode.STOP, 1)
                     device_list = connection.detect_devices()
                     pos=((float(device_list[1].get_position()))*4.95/1039370)
@@ -269,37 +251,37 @@ def InitializeZaber(self):
             def Left_z1():
                 speed=float(self.ui.load_pages.z1speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port(COM_port) as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int(-speed))
             
             def Left_z2():
                 speed=float(self.ui.load_pages.z2speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port(COM_port) as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(2, CommandCode.MOVE_AT_CONSTANT_SPEED, int(-speed))
             
             def Left_z3():
                 speed=float(self.ui.load_pages.z3speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port(COM_port) as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int(-speed))
             
             def Right_z1():
                 speed=float(self.ui.load_pages.z1speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port(COM_port) as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(1, CommandCode.MOVE_AT_CONSTANT_SPEED, int(speed))
             
             def Right_z2():
                 speed=float(self.ui.load_pages.z2speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port(COM_port) as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(2, CommandCode.MOVE_AT_CONSTANT_SPEED, int(speed))
             
             def Right_z3():
                 speed=float(self.ui.load_pages.z3speed.text())
                 speed=speed*1000*1.6381/1.9843
-                with Connection.open_serial_port(COM_port) as connection:
+                with Connection.open_serial_port("COM6") as connection:
                     response = connection.generic_command(3, CommandCode.MOVE_AT_CONSTANT_SPEED, int(speed))
 
             # Button connections ######################################################
@@ -323,7 +305,7 @@ def InitializeZaber(self):
             self.ui.load_pages.z3_Set.clicked.connect(Set_z3)
             #Stop 
             self.ui.load_pages.z1_Stop.clicked.connect(Stop_z1)
-            self.ui.load_pages.z2_Stop.clicked.connect(Stop_z2) # Stop X direction
+            self.ui.load_pages.z2_Stop.clicked.connect(Stop_z2)
             self.ui.load_pages.z3_Stop.clicked.connect(Stop_z3)
             #Constant Speed
             self.ui.load_pages.z1_left.clicked.connect(Left_z1)
@@ -348,13 +330,13 @@ def InitializeZaber(self):
 
 
 def CheckDevices():
-    with Connection.open_serial_port(COM_port) as connection:
+    with Connection.open_serial_port(COM4) as connection:
         device_list = connection.detect_devices()
         return len(device_list)
 
 #---------- Zaber 1 --------------#
 def SetZaber1(Abs,Rel,cm,mm,um,dist):
-    with Connection.open_serial_port(COM_port) as connection:
+    with Connection.open_serial_port(COM4) as connection:
         device_list = connection.detect_devices()
         if Abs:
             if cm:
@@ -379,7 +361,7 @@ def SetZaber1(Abs,Rel,cm,mm,um,dist):
 
 
 def SliderZ1(val):    
-    with Connection.open_serial_port(COM_port) as connection:
+    with Connection.open_serial_port(COM4) as connection:
         device_list = connection.detect_devices()
         device_list[0].move_absolute(float((val*5)/100), Units.LENGTH_CENTIMETRES)
         pos=((float(device_list[0].get_position()))*4.95/1039370)
@@ -389,7 +371,7 @@ def SliderZ1(val):
 
 #---------- Zaber 2 --------------#
 def SetZaber2(Abs,Rel,cm,mm,um,dist):
-    with Connection.open_serial_port(COM_port) as connection:
+    with Connection.open_serial_port(COM4) as connection:
         device_list = connection.detect_devices()
         if Abs:
             if cm:
@@ -413,7 +395,7 @@ def SetZaber2(Abs,Rel,cm,mm,um,dist):
 
 def SliderZ2(val):
     
-    with Connection.open_serial_port(COM_port) as connection:
+    with Connection.open_serial_port(COM4) as connection:
         device_list = connection.detect_devices()
         device_list[2].move_absolute(float((val*5)/100), Units.LENGTH_CENTIMETRES)
         pos=((float(device_list[2].get_position()))*4.95/1039370)
@@ -424,7 +406,7 @@ def SliderZ2(val):
 
 #---------- Zaber 3 --------------#
 def SetZaber3(Abs,Rel,cm,mm,um,dist):
-    with Connection.open_serial_port(COM_port) as connection:
+    with Connection.open_serial_port(COM4) as connection:
         device_list = connection.detect_devices()
         if Abs:
             if cm:
@@ -448,7 +430,7 @@ def SetZaber3(Abs,Rel,cm,mm,um,dist):
 
 def SliderZ3(val):
     
-    with Connection.open_serial_port(COM_port) as connection:
+    with Connection.open_serial_port(COM4) as connection:
         device_list = connection.detect_devices()
         device_list[1].move_absolute(float((val*5)/100), Units.LENGTH_CENTIMETRES)
         pos=((float(device_list[1].get_position()))*4.95/1039370)

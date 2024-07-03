@@ -26,8 +26,7 @@ class WorkerDAQ(QObject):
         # Definition of all variables needed to take the data and do the coms with NI DAQ
         self.Laser_frequency=Laser_frequency
         self.Number_to_mean=int(Number_to_mean)
-        #self.DAQ_Device=DAQ_Device  #"Dev1/ai0" OLD IMPLEMN
-        self.DAQ_Device= DAQ_Device #"Dev1/ai0"
+        self.DAQ_Device=DAQ_Device  #"Dev1/ai0"
         self.number_of_samples=int(number_of_samples)
         # Variables to store the most important info
         self.DAQ_X_Axis = list(range(self.number_of_samples))
@@ -35,7 +34,6 @@ class WorkerDAQ(QObject):
         # Number of files
         self.fileSave=fileSave
         self.running = True
-        print("INFO: DAQ: new workerDAQ created and started")
 
 
     @Slot()
@@ -43,7 +41,6 @@ class WorkerDAQ(QObject):
         with nidaqmx.Task() as task_Laser:
             #Signal Adquisition ########################################################
             #Add Sensor
-            print(f"INFO: Selected DAQ device: {self.DAQ_Device} ")
             task_Laser.ai_channels.add_ai_voltage_chan(self.DAQ_Device,max_val=5, min_val=-5)
             # Set Sampling clocks
             task_Laser.timing.cfg_samp_clk_timing(rate=self.Laser_frequency, sample_mode=constants.AcquisitionType.CONTINUOUS)
@@ -52,17 +49,16 @@ class WorkerDAQ(QObject):
 
             while self.running:
                 try:
-                    #print("DEBUG: workerDAQ retrieving samples")
                     reader.read_many_sample(self.DAQ_Data, number_of_samples_per_channel=self.number_of_samples, timeout=10)
                     self.completeddaq.emit(self.DAQ_Data)  # Emitting data read from DAQ
                 except:
-                    print("ERROR: workerDAQ failed to retrieve samples")
                     pass
 
     def stop(self):
         self.running = False 
-        
+
 # creation of the Class DAQData, an object linked to the worker and the master class of the thread
+        
 class DAQData(QObject):
     # Creation of the requested thread of the worker
     workDAQ_requested = Signal(int)
@@ -95,13 +91,17 @@ class DAQData(QObject):
 
     #Function to delete the thread.
     def deleteDAQ(self):
-        self.workerDAQ.stop()
-        self.threadDAQ.quit()
-        self.threadDAQ.wait()
-        # Reset the DAQ Device
-        system = nidaqmx.system.System.local()
-        for device in system.devices:
-            #if device.name == self.DAQ_Device:
-            device.reset_device()
-            print(f"Device {self.DAQ_Device} has been reset.")
+
+        try:
+            self.workerDAQ.stop()
+            self.threadDAQ.quit()
+            self.threadDAQ.wait()
+            # Reset the DAQ Device
+            system = nidaqmx.system.System.local()
+            for device in system.devices:
+                #if device.name == self.DAQ_Device:
+                device.reset_device()
+                print(f"Device {self.DAQ_Device} has been reset.")
+        except:
+            print("DAQ is still on")
 
