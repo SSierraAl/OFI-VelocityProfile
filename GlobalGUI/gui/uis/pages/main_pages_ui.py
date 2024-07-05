@@ -42,6 +42,11 @@ class Ui_MainPages(object):
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
         self.label_27 = QLabel(self.page_1)
         self.label_27.setObjectName(u"label_27")
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_27.sizePolicy().hasHeightForWidth())
+        self.label_27.setSizePolicy(sizePolicy)
         self.label_27.setAlignment(Qt.AlignCenter)
 
         self.verticalLayout_6.addWidget(self.label_27)
@@ -64,9 +69,6 @@ class Ui_MainPages(object):
 
         self.label_14 = QLabel(self.page_1)
         self.label_14.setObjectName(u"label_14")
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_14.sizePolicy().hasHeightForWidth())
         self.label_14.setSizePolicy(sizePolicy)
         self.label_14.setAlignment(Qt.AlignCenter)
@@ -269,12 +271,19 @@ class Ui_MainPages(object):
         self.Server_Layout.setObjectName(u"Server_Layout")
         self.label_31 = QLabel(self.page_2)
         self.label_31.setObjectName(u"label_31")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.label_31.sizePolicy().hasHeightForWidth())
+        self.label_31.setSizePolicy(sizePolicy2)
         self.label_31.setAlignment(Qt.AlignCenter)
 
         self.Server_Layout.addWidget(self.label_31)
 
         self.Update_but_Server = QPushButton(self.page_2)
         self.Update_but_Server.setObjectName(u"Update_but_Server")
+        sizePolicy2.setHeightForWidth(self.Update_but_Server.sizePolicy().hasHeightForWidth())
+        self.Update_but_Server.setSizePolicy(sizePolicy2)
 
         self.Server_Layout.addWidget(self.Update_but_Server)
 
@@ -293,6 +302,8 @@ class Ui_MainPages(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.label_p3 = QLabel(self.page_3)
         self.label_p3.setObjectName(u"label_p3")
+        sizePolicy.setHeightForWidth(self.label_p3.sizePolicy().hasHeightForWidth())
+        self.label_p3.setSizePolicy(sizePolicy)
         self.label_p3.setAlignment(Qt.AlignCenter)
 
         self.verticalLayout_2.addWidget(self.label_p3)
@@ -334,32 +345,32 @@ class Ui_MainPages(object):
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         self.globalhome_p3 = QPushButton(self.page_3)
         self.globalhome_p3.setObjectName(u"globalhome_p3")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        sizePolicy2.setHeightForWidth(self.globalhome_p3.sizePolicy().hasHeightForWidth())
-        self.globalhome_p3.setSizePolicy(sizePolicy2)
+        sizePolicy3 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.globalhome_p3.sizePolicy().hasHeightForWidth())
+        self.globalhome_p3.setSizePolicy(sizePolicy3)
 
         self.horizontalLayout_2.addWidget(self.globalhome_p3)
 
         self.home1_p3 = QPushButton(self.page_3)
         self.home1_p3.setObjectName(u"home1_p3")
-        sizePolicy2.setHeightForWidth(self.home1_p3.sizePolicy().hasHeightForWidth())
-        self.home1_p3.setSizePolicy(sizePolicy2)
+        sizePolicy3.setHeightForWidth(self.home1_p3.sizePolicy().hasHeightForWidth())
+        self.home1_p3.setSizePolicy(sizePolicy3)
 
         self.horizontalLayout_2.addWidget(self.home1_p3)
 
         self.home2_p3 = QPushButton(self.page_3)
         self.home2_p3.setObjectName(u"home2_p3")
-        sizePolicy2.setHeightForWidth(self.home2_p3.sizePolicy().hasHeightForWidth())
-        self.home2_p3.setSizePolicy(sizePolicy2)
+        sizePolicy3.setHeightForWidth(self.home2_p3.sizePolicy().hasHeightForWidth())
+        self.home2_p3.setSizePolicy(sizePolicy3)
 
         self.horizontalLayout_2.addWidget(self.home2_p3)
 
         self.home3_p3 = QPushButton(self.page_3)
         self.home3_p3.setObjectName(u"home3_p3")
-        sizePolicy2.setHeightForWidth(self.home3_p3.sizePolicy().hasHeightForWidth())
-        self.home3_p3.setSizePolicy(sizePolicy2)
+        sizePolicy3.setHeightForWidth(self.home3_p3.sizePolicy().hasHeightForWidth())
+        self.home3_p3.setSizePolicy(sizePolicy3)
 
         self.horizontalLayout_2.addWidget(self.home3_p3)
 
@@ -464,11 +475,11 @@ class Ui_MainPages(object):
         self.horizontalLayout_13.setContentsMargins(-1, 0, -1, -1)
         self.z1speed = QLineEdit(self.page_3)
         self.z1speed.setObjectName(u"z1speed")
-        sizePolicy3 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
-        sizePolicy3.setHorizontalStretch(0)
-        sizePolicy3.setVerticalStretch(0)
-        sizePolicy3.setHeightForWidth(self.z1speed.sizePolicy().hasHeightForWidth())
-        self.z1speed.setSizePolicy(sizePolicy3)
+        sizePolicy4 = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.z1speed.sizePolicy().hasHeightForWidth())
+        self.z1speed.setSizePolicy(sizePolicy4)
         self.z1speed.setMaxLength(200)
 
         self.horizontalLayout_13.addWidget(self.z1speed)
@@ -1015,18 +1026,18 @@ class Ui_MainPages(object):
 
         self.lineEdit_Pixel_size = QLineEdit(self.page_calib)
         self.lineEdit_Pixel_size.setObjectName(u"lineEdit_Pixel_size")
-        sizePolicy4 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-        sizePolicy4.setHorizontalStretch(0)
-        sizePolicy4.setVerticalStretch(0)
-        sizePolicy4.setHeightForWidth(self.lineEdit_Pixel_size.sizePolicy().hasHeightForWidth())
-        self.lineEdit_Pixel_size.setSizePolicy(sizePolicy4)
+        sizePolicy5 = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        sizePolicy5.setHorizontalStretch(0)
+        sizePolicy5.setVerticalStretch(0)
+        sizePolicy5.setHeightForWidth(self.lineEdit_Pixel_size.sizePolicy().hasHeightForWidth())
+        self.lineEdit_Pixel_size.setSizePolicy(sizePolicy5)
 
         self.gridLayout_7.addWidget(self.lineEdit_Pixel_size, 3, 2, 1, 1)
 
         self.label_32 = QLabel(self.page_calib)
         self.label_32.setObjectName(u"label_32")
-        sizePolicy2.setHeightForWidth(self.label_32.sizePolicy().hasHeightForWidth())
-        self.label_32.setSizePolicy(sizePolicy2)
+        sizePolicy3.setHeightForWidth(self.label_32.sizePolicy().hasHeightForWidth())
+        self.label_32.setSizePolicy(sizePolicy3)
 
         self.gridLayout_7.addWidget(self.label_32, 3, 0, 1, 1)
 
@@ -1071,15 +1082,15 @@ class Ui_MainPages(object):
 
         self.Step_Step_but = QPushButton(self.page_calib)
         self.Step_Step_but.setObjectName(u"Step_Step_but")
-        sizePolicy4.setHeightForWidth(self.Step_Step_but.sizePolicy().hasHeightForWidth())
-        self.Step_Step_but.setSizePolicy(sizePolicy4)
+        sizePolicy5.setHeightForWidth(self.Step_Step_but.sizePolicy().hasHeightForWidth())
+        self.Step_Step_but.setSizePolicy(sizePolicy5)
 
         self.gridLayout_3.addWidget(self.Step_Step_but, 2, 0, 1, 1)
 
         self.Calib_Reset_Scan_but = QPushButton(self.page_calib)
         self.Calib_Reset_Scan_but.setObjectName(u"Calib_Reset_Scan_but")
-        sizePolicy4.setHeightForWidth(self.Calib_Reset_Scan_but.sizePolicy().hasHeightForWidth())
-        self.Calib_Reset_Scan_but.setSizePolicy(sizePolicy4)
+        sizePolicy5.setHeightForWidth(self.Calib_Reset_Scan_but.sizePolicy().hasHeightForWidth())
+        self.Calib_Reset_Scan_but.setSizePolicy(sizePolicy5)
 
         self.gridLayout_3.addWidget(self.Calib_Reset_Scan_but, 2, 1, 1, 1)
 

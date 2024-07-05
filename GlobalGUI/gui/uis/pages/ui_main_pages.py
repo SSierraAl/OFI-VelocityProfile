@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'main_pagessfdwDL.ui'
+## Form generated from reading UI file 'main_pagesltByjl.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.4.2
 ##
@@ -42,6 +42,11 @@ class Ui_MainPages(object):
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
         self.label_27 = QLabel(self.page_1)
         self.label_27.setObjectName(u"label_27")
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_27.sizePolicy().hasHeightForWidth())
+        self.label_27.setSizePolicy(sizePolicy)
         self.label_27.setAlignment(Qt.AlignCenter)
 
         self.verticalLayout_6.addWidget(self.label_27)
@@ -64,9 +69,6 @@ class Ui_MainPages(object):
 
         self.label_14 = QLabel(self.page_1)
         self.label_14.setObjectName(u"label_14")
-        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_14.sizePolicy().hasHeightForWidth())
         self.label_14.setSizePolicy(sizePolicy)
         self.label_14.setAlignment(Qt.AlignCenter)
@@ -300,6 +302,8 @@ class Ui_MainPages(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.label_p3 = QLabel(self.page_3)
         self.label_p3.setObjectName(u"label_p3")
+        sizePolicy.setHeightForWidth(self.label_p3.sizePolicy().hasHeightForWidth())
+        self.label_p3.setSizePolicy(sizePolicy)
         self.label_p3.setAlignment(Qt.AlignCenter)
 
         self.verticalLayout_2.addWidget(self.label_p3)
