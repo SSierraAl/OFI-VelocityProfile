@@ -76,18 +76,18 @@ class SetupMainWindow:
             "is_active" : False
         },
         {
-            "btn_icon" : "icon_attachment.svg",
-            "btn_id" : "btn_colors",
-            "btn_text" : "Color Detection",
-            "btn_tooltip" : "Color",
+            "btn_icon" : "icon_search.svg",
+            "btn_id" : "btn_search",
+            "btn_text" : "Scanning",
+            "btn_tooltip" : "Scanning",
             "show_top" : True,
             "is_active" : False
         },
         {
-            "btn_icon" : "icon_search.svg",
-            "btn_id" : "btn_search",
-            "btn_text" : "Calibration",
-            "btn_tooltip" : "Calibration",
+            "btn_icon" : "icon_info.svg",
+            "btn_id" : "btn_server",
+            "btn_text" : "Server",
+            "btn_tooltip" : "Server",
             "show_top" : True,
             "is_active" : False
         },

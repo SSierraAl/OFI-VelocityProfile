@@ -17,15 +17,14 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGridLayout,
     QHBoxLayout, QLabel, QLayout, QLineEdit,
-    QPushButton, QRadioButton, QScrollArea, QSizePolicy,
-    QSlider, QSpacerItem, QStackedWidget, QVBoxLayout,
-    QWidget)
+    QPushButton, QRadioButton, QSizePolicy, QSlider,
+    QSpacerItem, QStackedWidget, QVBoxLayout, QWidget)
 
 class Ui_MainPages(object):
     def setupUi(self, MainPages):
         if not MainPages.objectName():
             MainPages.setObjectName(u"MainPages")
-        MainPages.resize(953, 820)
+        MainPages.resize(956, 820)
         self.main_pages_layout = QVBoxLayout(MainPages)
         self.main_pages_layout.setSpacing(0)
         self.main_pages_layout.setObjectName(u"main_pages_layout")
@@ -266,67 +265,21 @@ class Ui_MainPages(object):
         self.page_2_layout.setSpacing(5)
         self.page_2_layout.setObjectName(u"page_2_layout")
         self.page_2_layout.setContentsMargins(5, 5, 5, 5)
-        self.scroll_area = QScrollArea(self.page_2)
-        self.scroll_area.setObjectName(u"scroll_area")
-        self.scroll_area.setStyleSheet(u"background: transparent;")
-        self.scroll_area.setFrameShape(QFrame.NoFrame)
-        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll_area.setWidgetResizable(True)
-        self.contents = QWidget()
-        self.contents.setObjectName(u"contents")
-        self.contents.setGeometry(QRect(0, 0, 933, 800))
-        self.contents.setStyleSheet(u"background: transparent;")
-        self.verticalLayout = QVBoxLayout(self.contents)
-        self.verticalLayout.setSpacing(15)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(5, 5, 5, 5)
-        self.title_label = QLabel(self.contents)
-        self.title_label.setObjectName(u"title_label")
-        self.title_label.setMaximumSize(QSize(16777215, 40))
-        font = QFont()
-        font.setPointSize(16)
-        self.title_label.setFont(font)
-        self.title_label.setStyleSheet(u"font-size: 16pt")
-        self.title_label.setAlignment(Qt.AlignCenter)
+        self.Server_Layout = QVBoxLayout()
+        self.Server_Layout.setObjectName(u"Server_Layout")
+        self.label_31 = QLabel(self.page_2)
+        self.label_31.setObjectName(u"label_31")
+        self.label_31.setAlignment(Qt.AlignCenter)
 
-        self.verticalLayout.addWidget(self.title_label)
+        self.Server_Layout.addWidget(self.label_31)
 
-        self.description_label = QLabel(self.contents)
-        self.description_label.setObjectName(u"description_label")
-        self.description_label.setAlignment(Qt.AlignHCenter|Qt.AlignTop)
-        self.description_label.setWordWrap(True)
+        self.Update_but_Server = QPushButton(self.page_2)
+        self.Update_but_Server.setObjectName(u"Update_but_Server")
 
-        self.verticalLayout.addWidget(self.description_label)
+        self.Server_Layout.addWidget(self.Update_but_Server)
 
-        self.row_1_layout = QHBoxLayout()
-        self.row_1_layout.setObjectName(u"row_1_layout")
 
-        self.verticalLayout.addLayout(self.row_1_layout)
-
-        self.row_2_layout = QHBoxLayout()
-        self.row_2_layout.setObjectName(u"row_2_layout")
-
-        self.verticalLayout.addLayout(self.row_2_layout)
-
-        self.row_3_layout = QHBoxLayout()
-        self.row_3_layout.setObjectName(u"row_3_layout")
-
-        self.verticalLayout.addLayout(self.row_3_layout)
-
-        self.row_4_layout = QVBoxLayout()
-        self.row_4_layout.setObjectName(u"row_4_layout")
-
-        self.verticalLayout.addLayout(self.row_4_layout)
-
-        self.row_5_layout = QVBoxLayout()
-        self.row_5_layout.setObjectName(u"row_5_layout")
-
-        self.verticalLayout.addLayout(self.row_5_layout)
-
-        self.scroll_area.setWidget(self.contents)
-
-        self.page_2_layout.addWidget(self.scroll_area)
+        self.page_2_layout.addLayout(self.Server_Layout)
 
         self.pages.addWidget(self.page_2)
         self.page_3 = QWidget()
@@ -338,13 +291,14 @@ class Ui_MainPages(object):
         self.page_3_layout.setObjectName(u"page_3_layout")
         self.verticalLayout_2 = QVBoxLayout()
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.label_p3 = QLabel(self.page_3)
         self.label_p3.setObjectName(u"label_p3")
+        self.label_p3.setAlignment(Qt.AlignCenter)
 
-        self.horizontalLayout.addWidget(self.label_p3)
+        self.verticalLayout_2.addWidget(self.label_p3)
 
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.zabercon_p3 = QPushButton(self.page_3)
         self.zabercon_p3.setObjectName(u"zabercon_p3")
 
@@ -356,6 +310,8 @@ class Ui_MainPages(object):
 
         self.n_devices_p3 = QLabel(self.page_3)
         self.n_devices_p3.setObjectName(u"n_devices_p3")
+        font = QFont()
+        font.setPointSize(16)
         self.n_devices_p3.setFont(font)
 
         self.horizontalLayout.addWidget(self.n_devices_p3)
@@ -1174,7 +1130,7 @@ class Ui_MainPages(object):
 
         self.retranslateUi(MainPages)
 
-        self.pages.setCurrentIndex(3)
+        self.pages.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(MainPages)
@@ -1182,8 +1138,8 @@ class Ui_MainPages(object):
 
     def retranslateUi(self, MainPages):
         MainPages.setWindowTitle(QCoreApplication.translate("MainPages", u"Form", None))
-        self.label_27.setText(QCoreApplication.translate("MainPages", u"Home", None))
-        self.label_14.setText(QCoreApplication.translate("MainPages", u"Parameters", None))
+        self.label_27.setText(QCoreApplication.translate("MainPages", u"<html><head/><body><p><span style=\" font-size:16pt; font-weight:700;\">Signal Acquisition</span></p></body></html>", None))
+        self.label_14.setText(QCoreApplication.translate("MainPages", u"<html><head/><body><p><span style=\" font-weight:700;\">Parameters</span></p></body></html>", None))
         self.lineEdit_Low_Freq.setText(QCoreApplication.translate("MainPages", u"7000", None))
         self.label_19.setText(QCoreApplication.translate("MainPages", u"Average FFT", None))
         self.label_18.setText(QCoreApplication.translate("MainPages", u"Bandpass Filter H [Hz]:", None))
@@ -1204,10 +1160,9 @@ class Ui_MainPages(object):
         self.Moment_val.setText(QCoreApplication.translate("MainPages", u"00.00", None))
         self.label_43.setText(QCoreApplication.translate("MainPages", u"Max Amp Peak:", None))
         self.Max_Peak_val.setText(QCoreApplication.translate("MainPages", u"00.00", None))
-        self.title_label.setText(QCoreApplication.translate("MainPages", u"Custom Widgets Page", None))
-        self.description_label.setText(QCoreApplication.translate("MainPages", u"Here will be all the custom widgets, they will be added over time on this page.\n"
-"I will try to always record a new tutorial when adding a new Widget and updating the project on Patreon before launching on GitHub and GitHub after the public release.", None))
-        self.label_p3.setText(QCoreApplication.translate("MainPages", u"CHECK CONNECTION", None))
+        self.label_31.setText(QCoreApplication.translate("MainPages", u"<html><head/><body><p align=\"center\"><span style=\" font-size:16pt; font-weight:700;\">Data Analysis</span></p></body></html>", None))
+        self.Update_but_Server.setText(QCoreApplication.translate("MainPages", u"PushButton", None))
+        self.label_p3.setText(QCoreApplication.translate("MainPages", u"<html><head/><body><p><span style=\" font-weight:700;\">Zaber Connection</span></p></body></html>", None))
         self.zabercon_p3.setText(QCoreApplication.translate("MainPages", u"CONNECT", None))
         self.n_devices_p3.setText(QCoreApplication.translate("MainPages", u"<html><head/><body><p><span style=\" font-size:10pt;\"># Devices</span></p></body></html>", None))
         self.check_p3.setText(QCoreApplication.translate("MainPages", u"Available", None))
@@ -1258,7 +1213,7 @@ class Ui_MainPages(object):
         self.z3_right.setText(QCoreApplication.translate("MainPages", u">>", None))
         self.z3_Stop.setText(QCoreApplication.translate("MainPages", u"STOP", None))
         self.Keyboard_p3.setText(QCoreApplication.translate("MainPages", u"Keyboard", None))
-        self.label_13.setText(QCoreApplication.translate("MainPages", u"<html><head/><body><p align=\"center\"><span style=\" font-size:16pt; font-weight:600;\">Flow Velocity Profile</span></p></body></html>", None))
+        self.label_13.setText(QCoreApplication.translate("MainPages", u"<html><head/><body><p align=\"center\"><span style=\" font-size:16pt; font-weight:700;\">Flow Velocity Profile</span></p></body></html>", None))
         self.label_20.setText(QCoreApplication.translate("MainPages", u"Calibration", None))
         self.Vel_Start_Calib.setText(QCoreApplication.translate("MainPages", u"START", None))
         self.Vel_Threshold_Peak.setText(QCoreApplication.translate("MainPages", u"30", None))

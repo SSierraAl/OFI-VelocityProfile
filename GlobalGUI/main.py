@@ -28,7 +28,7 @@ from TAB_ZaberFunctions import *
 from TAB_Home_Read import *
 from DAQ_Reader_Global import *
 from TAB_Scanning import *
-
+from TAB_Server import *
 
 import pyqtgraph as pg
 import sys
@@ -36,7 +36,9 @@ from PySide6.QtCore import QTimer
 import keyboard
 
 import subprocess as sp
-
+from queue import Queue
+# Shared data structure server and app
+shared_queue = Queue()
 # MAIN WINDOW
 # ///////////////////////////////////////////////////////////////
 class MainWindow(QMainWindow):
@@ -79,6 +81,11 @@ class MainWindow(QMainWindow):
         self.scan_functions_instance = Scan_functions(self)
         Set_Scanning_Tab(self, self.scan_functions_instance) #TODO: the scan_functions_instance of self can be used within the set_scanning_tab now, without having to pass it as an argument.
 
+        # SET SERVER TAB
+        # ///////////////////////////////////////////////////////////////
+        self.Server_Instance = Server_Init_Bokeh(self, shared_queue)
+
+
         # ///////////////////////////////////////////////////////////////
         # SHOW MAIN WINDOW
         # ///////////////////////////////////////////////////////////////
@@ -113,6 +120,14 @@ class MainWindow(QMainWindow):
             self.ui.left_menu.select_only_one(btn.objectName())
             MainFunctions.set_page(self, self.ui.load_pages.page_calib)
 
+        # SERVER CONECTION
+        # ///////////////////////////////////////////////////////////////
+        if btn.objectName() == "btn_server":
+            # Select Menu
+            self.ui.left_menu.select_only_one(btn.objectName())
+            MainFunctions.set_page(self, self.ui.load_pages.page_2)
+
+
         # ZABER CONECTION BTN
         # ///////////////////////////////////////////////////////////////
         if btn.objectName() == "btn_zaber":
@@ -142,6 +157,14 @@ class MainWindow(QMainWindow):
     def mousePressEvent(self, event):
         # SET DRAG POS WINDOW
         self.dragPos = event.globalPos()
+
+
+    # BOKEH SERVER
+    # ///////////////////////////////////////////////////////////////
+    def closeEvent(self, event):
+        #Override function to stop the thread at the same time that the app is closed
+        Server_Init_Bokeh.stop_thread(self.Server_Instance)
+        event.accept()
 
 
 # SETTINGS WHEN TO START
