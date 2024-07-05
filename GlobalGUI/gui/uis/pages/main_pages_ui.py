@@ -1190,7 +1190,7 @@ class Ui_MainPages(object):
         self.label_15.setText(QCoreApplication.translate("MainPages", u"Acquisition Frequency [Hz]:", None))
         self.lineEdit_High_Freq.setText(QCoreApplication.translate("MainPages", u"100000", None))
         self.label_17.setText(QCoreApplication.translate("MainPages", u"Bandpass Filter L [Hz]:", None))
-        self.lineEdit_Laser.setText(QCoreApplication.translate("MainPages", u"2000000", None))
+        self.lineEdit_Laser.setText(QCoreApplication.translate("MainPages", u"1000000", None))
         self.lineEdit_number_samples.setText(QCoreApplication.translate("MainPages", u"16384", None))
         self.lineEdit_Avg_FFT.setText(QCoreApplication.translate("MainPages", u"100", None))
         self.label_22.setText(QCoreApplication.translate("MainPages", u"Directory:", None))
