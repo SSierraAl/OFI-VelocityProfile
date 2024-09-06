@@ -1504,7 +1504,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>10000</string>
+                  <string>37720</string>
                  </property>
                 </widget>
                </item>
@@ -1524,7 +1524,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>200</string>
+                  <string>10</string>
                  </property>
                 </widget>
                </item>
@@ -1535,9 +1535,9 @@
                    <horstretch>0</horstretch>
                    <verstretch>0</verstretch>
                   </sizepolicy>
-                 </property>
+                 </property>3
                  <property name="text">
-                  <string>6700</string>
+                  <string>13850</string>
                  </property>
                 </widget>
                </item>
@@ -1557,7 +1557,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>10400</string>
+                  <string>37770</string>
                  </property>
                 </widget>
                </item>
@@ -1570,7 +1570,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>200</string>
+                  <string>10</string>
                  </property>
                 </widget>
                </item>
@@ -1603,7 +1603,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>3700</string>
+                  <string>13350</string>
                  </property>
                 </widget>
                </item>

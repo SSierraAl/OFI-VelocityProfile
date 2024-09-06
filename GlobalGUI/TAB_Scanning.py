@@ -97,11 +97,12 @@ class ColorGrid(QWidget):
 
     def exportar_Matrix_CSV(self):
         df = pd.DataFrame(self.CSV_Moments_Matrix)
-        df.to_csv('Scanning_Moments_CSV.csv', index=True)
+        path=r'D:\Python_measurement_csv'
+        df.to_csv(path+r'\Scanning_Moments_CSV.csv', index=True) # r to declare raw string
         df = pd.DataFrame(self.CSV_Moments_M0_Matrix)
-        df.to_csv('Scanning_Moments_M0_CSV.csv', index=True)
+        df.to_csv(path+r'\Scanning_Moments_M0_CSV.csv', index=True)
         df = pd.DataFrame(self.CSV_Moments_M1_Matrix)
-        df.to_csv('Scanning_Moments_M1_CSV.csv', index=True)
+        df.to_csv(path+r'\Scanning_Moments_M1_CSV.csv', index=True)
 
     ###################################################################
     ###################################################################
@@ -310,10 +311,10 @@ class Scan_functions:
             newcolor (integer): the color value within a range of 0 to 255, 
             with the lowest input resulting in 255, and max input in 0.
         """
-        min_x = 15000
-        max_x = 37000
-        min_y = 255
-        max_y = 0
+        min_x = 0 #maybe change to 17000
+        max_x = 30 #maybe change to 45000
+        min_y = 0
+        max_y = 255
         newcolor = ((oldcolor - min_x) * (max_y - min_y) / (max_x - min_x)) + min_y
         return newcolor
 
@@ -422,7 +423,8 @@ class Scan_functions:
             # Save Avg spectrum for each row to .csv, only in normal scan mode and for x direction
             # NOTE: if necessary it should work for y, but not tested and not currently required.
             if self.main_window.edge_scan_mode is False and self.main_window.axis == 'x':
-                self.main_window.Data_Spectrum_Array.to_csv('Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
+                path=r'D:\Python_measurement_csv'
+                self.main_window.Data_Spectrum_Array.to_csv(path+r'\Scanning_Avg_Spectrum'+str(actual_pos)+'.csv', index=True)
             self.main_window.Data_Spectrum_Array=pd.DataFrame()
         
             # Reset positions
@@ -456,7 +458,8 @@ class Scan_functions:
                 # Save x direction scan moment values to .csv
                 if self.main_window.edge_scan_mode is False and self.main_window.axis == 'x':
                     self.main_window.color_grid_widget.exportar_Matrix_CSV()
-                    self.main_window.Moment_Dev.to_csv('Scanning_Moments_Dev.csv', index=True)
+                    path=r'D:\Python_measurement_csv'
+                    self.main_window.Moment_Dev.to_csv(path+r'\Scanning_Moments_Dev.csv', index=True)
                 
                 print('------  Scan finished --------')
                 print('NOTE: Do not forget to save .csv files to other directory before starting next scan')
@@ -520,15 +523,18 @@ class Scan_functions:
             M1 = np.sum(self.main_window.dataFreq * self.main_window.PSD_Avg_Moment)
             
             # NOTE: Data debug prints
-            #print('AVG Moment')
-            #print(M1/M0)
-            #print('N Avg Samples')
-            #print(self.main_window.Counter_DAQ_samples)
-
+            print('AVG Moment')
+            print(M1/M0)
+            print('N Avg Samples')
+            print(self.main_window.Counter_DAQ_samples)
+            print('M1:')
+            print(M1)
+            
             # Save calculated moment to variable for flow velocity profile view.
             # TODO: These two are double, and perform the same, but keeping it like this for now to make sure nothing breaks.
             moment = M1/M0
-            colorcolor=int(M1/M0)
+            
+            colorcolor=(M1)
             
             # For simulation purposes, artificially increases the moment so the threshold is exceeded.
             # TODO: remove or disable when applying edge scan

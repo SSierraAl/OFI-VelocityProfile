@@ -15,18 +15,22 @@ from bokeh.transform import linear_cmap
 class Data_processing:
     def __init__ (self, main_window):
         main_window = main_window
-        self.moments = None
+        self.moments = None    
         
-    def read_moments(self):
+    def read_moments(self, folder_name):
         """Function for reading .csv moments
         """
         # read_csv with pandas of scanning_moments_csv.csv
         # save it to pandas series in such a way that it can easily be manipulated
         
         #index_col = 0 takes the first column in the csv file and uses those as the pandas series index
-        self.moments = pd.read_csv("Scanning_Moments_CSV.csv", index_col=0)
-        #print(self.moments.head(5))
-        #print(self.moments.tail(1))
+        path = f"../measurements_to_analyse/{folder_name}/Scanning_Moments_CSV.csv"
+        moments = pd.read_csv(path, index_col=0)
+        
+        #TEMPORARY:
+        self.moments = moments
+        
+        return moments
         
     def change_moments(self):
         """Function for manipulating the moments read from the CSV file
@@ -36,10 +40,6 @@ class Data_processing:
     def normal2d(self,X, Y, sigx=1.0, sigy=1.0, mux=0.0, muy=0.0):
         z = (X-mux)**2 / sigx**2 + (Y-muy)**2 / sigy**2
         return np.exp(-z/2) / (2 * np.pi * sigx * sigy)
-    
-    def display_moments_plot_test1(self):
-        "something"
-        
         
     def display_moments_plot_test2(self):
         global data 
@@ -95,10 +95,12 @@ class Data_processing:
 
         show(p)
 
-    def display_moments_lines_test(self):
+    def display_moments_lines(self):
         """Plots multiple rows of moments in separate lines
         NOTE: not finished, just for testing purposes
         """
+        
+        
         moments_plot = figure(title='Moments', x_axis_label='Index', y_axis_label='Moment')
 
         x = self.moments.columns.to_list()
@@ -114,12 +116,11 @@ class Data_processing:
         moments_plot.line(x, y2, legend_label="Scan Row 2", line_width=2, color="blue")
         moments_plot.scatter(x, y2, legend_label="test", line_width=2, color="pink")
         
-        
         scatter = moments_plot.scatter(
             x,
             y,
             marker="circle",
-            size=80,
+            size=10,
             legend_label="Objects",
             fill_color="red",
             fill_alpha=0.5,
@@ -138,4 +139,5 @@ print(data_processing_instance.moments)
 data_processing_instance.change_moments()
 print(data_processing_instance.moments)
 
-data_processing_instance.display_moments_plot_test2()
+#data_processing_instance.display_moments_plot_test2()
+data_processing_instance.display_moments_lines()
