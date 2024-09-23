@@ -35,6 +35,13 @@ Example Velocity Profile Output:
     python3 -m venv venv
     source venv/bin/activate   # On Windows, use `venv\Scripts\activate`
     ```
+3. **Usage:**
+    ```bash
+    cd GlobalGUI
+    python main.py 
+    ```
+    
+
 
 ## **Contributing**
 
