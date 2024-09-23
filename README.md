@@ -16,12 +16,6 @@ This project focuses on developing a framework to perform microfluidic experimen
 Example:
    ![General view](general.png)
 
-Example Image of the Experimental Setup:
-   [Experimental Setup](docs/images/experimental_setup.png)
-
-Example Velocity Profile Output:
-   [Velocity Profile](docs/images/velocity_profile.png)
-
 
 
 ## **Setup and Installation**
