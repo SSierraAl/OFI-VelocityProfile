@@ -10,7 +10,7 @@ This project focuses on developing a framework to perform microfluidic experimen
 - **Visualization of velocity profiles** during real-time scanning of microchannels
 - **Customizable OFI signal parameters** including acquisition frequency, sample points, and bandpass filtering
 - **Automated scanning** with customizable parameters like scanning speed [µm/s] and pixel resolution [µm]
-- **Data logging** with time-based weighted averaging and frequency spectrum analysis of captured samples
+- **Data logging** with the average weighted momemtum average and frequency spectrum analysis of multiple samples captured along the experiment
 
 
 Example:
