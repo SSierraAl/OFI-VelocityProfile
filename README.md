@@ -61,5 +61,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For any questions or issues, please contact:
 
-- **[Sebastian Sierra ]** - [sebsieal@hotmail.com]
+- **[Sebastian Sierra]** - [sebsieal@hotmail.com]
 - **GitHub Issues:** Open an issue on the repository
