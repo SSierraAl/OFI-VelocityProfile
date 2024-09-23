@@ -13,7 +13,10 @@ This project focuses on developing a framework to perform microfluidic experimen
 - **Data logging** with the average weighted momemtum average and frequency spectrum analysis of multiple samples captured along the experiment
 
 
-Example:
+
+  ![General view](general_setup.png)
+
+
    ![General view](general.png)
 
 
