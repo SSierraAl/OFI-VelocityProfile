@@ -14,7 +14,7 @@ This project focuses on developing a framework to perform microfluidic experimen
 
 
 Example:
-   ![OFI Sensor Setup](docs/images/ofi_sensor_setup.png)
+   ![General view](general.png)
 
 Example Image of the Experimental Setup:
    [Experimental Setup](docs/images/experimental_setup.png)
