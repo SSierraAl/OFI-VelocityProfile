@@ -13,7 +13,9 @@ from bokeh.plotting import figure, show,curdoc
 from bokeh.models import Button, TextInput,DataTable, NumberFormatter, StringFormatter, StringEditor, NumberEditor,TableColumn
 from bokeh.events import ButtonClick
 from bokeh.palettes import Viridis256
-import matplotlib.pyplot  as plt
+
+
+
 import numpy as np
 from scipy import signal
 from bokeh.layouts import column

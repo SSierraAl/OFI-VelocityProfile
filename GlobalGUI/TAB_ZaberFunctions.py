@@ -12,7 +12,7 @@ from PySide6.QtCore import QTimer
 import time
 from scipy.signal import welch, get_window
 
-COM_port="COM8" # Port uses for serial communication with Zabers
+COM_port="COM4" # Port uses for serial communication with Zabers
 
 
 #---------- Init --------------#

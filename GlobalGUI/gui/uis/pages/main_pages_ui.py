@@ -1248,7 +1248,7 @@ class Ui_MainPages(object):
         self.lineEdit_x2_scan.setText(QCoreApplication.translate("MainPages", u"13850", None))
         self.label_33.setText(QCoreApplication.translate("MainPages", u"X1 [um]:", None))
         self.lineEdit_y2_scan.setText(QCoreApplication.translate("MainPages", u"37770", None))
-        self.lineEdit_Pixel_size.setText(QCoreApplication.translate("MainPages", u"5", None))
+        self.lineEdit_Pixel_size.setText(QCoreApplication.translate("MainPages", u"10", None))
         self.label_32.setText(QCoreApplication.translate("MainPages", u"Size Pixels [um]:", None))
         self.label_36.setText(QCoreApplication.translate("MainPages", u"Y2 [um:", None))
         self.lineEdit_x1_scan.setText(QCoreApplication.translate("MainPages", u"13350", None))

@@ -515,9 +515,12 @@ class Scan_functions:
             # Solve M0: simple sum of PSD.
             M0 = np.sum(self.main_window.PSD_Avg_Moment) 
             
-            # Solve division by 0.
-            if M0==0:
-                M0=1
+            # Small epsilon value to avoid division by near-zero values
+            epsilon = 1e-10
+            # Solve division by near-zero.
+            if np.abs(M0) < epsilon:
+                M0 = epsilon  # Set M0 to epsilon instead of 1 to avoid large deviations
+
     
             # Solve M1: multiplication of the frequency and the PSD.
             M1 = np.sum(self.main_window.dataFreq * self.main_window.PSD_Avg_Moment)
